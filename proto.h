@@ -4818,8 +4818,8 @@ STATIC int	S_sv_2iuv_non_preserve(pTHX_ SV *const sv)
 
 #endif
 #if !(defined(HAS_SIGACTION) && defined(SA_SIGINFO))
-PERL_CALLCONV Signal_t	Perl_csighandler(int sig);
-PERL_CALLCONV Signal_t	Perl_sighandler(int sig);
+PERL_CALLCONV Signal_t __cdecl	Perl_csighandler(int sig);
+PERL_CALLCONV Signal_t __cdecl	Perl_sighandler(int sig);
 #endif
 #if !(defined(NO_MATHOMS))
 PERL_CALLCONV void	Perl_sv_nounlocking(pTHX_ SV *sv);

@@ -2097,7 +2097,7 @@ CPerlHost::Find(LPCSTR lpStr)
     return NULL;
 }
 
-int
+int __cdecl
 lookup(const void *arg1, const void *arg2)
 {   // Compare strings
     char*ptr1, *ptr2;
@@ -2142,7 +2142,7 @@ CPerlHost::Lookup(LPCSTR lpStr)
     return (LPSTR*)bsearch(&lpStr, m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), lookup);
 }
 
-int
+int __cdecl
 compare(const void *arg1, const void *arg2)
 {   // Compare strings
     char*ptr1, *ptr2;

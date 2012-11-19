@@ -2637,7 +2637,7 @@ PP(pp_sin)
     dVAR; dSP; dTARGET;
     int amg_type = sin_amg;
     const char *neg_report = NULL;
-    NV (*func)(NV) = Perl_sin;
+    NV (__cdecl *func)(NV) = Perl_sin;
     const int op_type = PL_op->op_type;
 
     switch (op_type) {

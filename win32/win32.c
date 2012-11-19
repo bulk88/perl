@@ -154,7 +154,7 @@ static HWND	get_hwnd_delay(pTHX, long child, DWORD tries);
 #endif
 
 #ifdef HAVE_INTERP_INTERN
-static void	win32_csighandler(int sig);
+static void	__cdecl win32_csighandler(int sig);
 #endif
 
 START_EXTERN_C
@@ -4517,7 +4517,7 @@ win32_create_message_window(void)
 
 #ifdef HAVE_INTERP_INTERN
 
-static void
+static void __cdecl
 win32_csighandler(int sig)
 {
 #if 0

@@ -123,7 +123,7 @@ is a lexical $_ in scope.
  * "STATIC", ie. it exports XSUB symbols. You probably don't want that.
  */
 
-#define XSPROTO(name) void name(pTHX_ CV* cv)
+#define XSPROTO(name) void __fastcall name(pTHX_ CV* cv)
 
 #undef XS
 #undef XS_EXTERNAL

@@ -64,7 +64,7 @@ tie.
 #if defined(HAS_SIGACTION) && defined(SA_SIGINFO)
 Signal_t Perl_csighandler(int sig, siginfo_t *, void *);
 #else
-Signal_t Perl_csighandler(int sig);
+Signal_t __cdecl Perl_csighandler(int sig);
 #endif
 
 #ifdef __Lynx__
@@ -1298,7 +1298,7 @@ Perl_magic_clearsig(pTHX_ SV *sv, MAGIC *mg)
     return sv_unmagic(sv, mg->mg_type);
 }
 
-Signal_t
+Signal_t __cdecl
 #if defined(HAS_SIGACTION) && defined(SA_SIGINFO)
 Perl_csighandler(int sig, siginfo_t *sip PERL_UNUSED_DECL, void *uap PERL_UNUSED_DECL)
 #else
@@ -3034,7 +3034,7 @@ Perl_whichsig_pvn(pTHX_ const char *sig, STRLEN len)
     return -1;
 }
 
-Signal_t
+Signal_t __cdecl
 #if defined(HAS_SIGACTION) && defined(SA_SIGINFO)
 Perl_sighandler(int sig, siginfo_t *sip, void *uap)
 #else

@@ -3018,7 +3018,7 @@ Perl_rsignal(pTHX_ int signo, Sighandler_t handler)
     return PerlProc_signal(signo, handler);
 }
 
-static Signal_t
+static Signal_t __cdecl
 sig_trap(int signo)
 {
     dVAR;

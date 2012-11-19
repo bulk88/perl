@@ -107,7 +107,7 @@ typedef struct {
     STRLEN pos; /* position */
 } UNF_cc;
 
-static int compare_cc(const void *a, const void *b)
+static int __cdecl compare_cc(const void *a, const void *b)
 {
     int ret_cc;
     ret_cc = ((UNF_cc*) a)->cc - ((UNF_cc*) b)->cc;

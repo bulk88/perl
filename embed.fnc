@@ -1209,8 +1209,8 @@ Ap	|HEK*	|share_hek	|NN const char* str|I32 len|U32 hash
 np	|Signal_t |sighandler	|int sig|NULLOK siginfo_t *info|NULLOK void *uap
 Anp	|Signal_t |csighandler	|int sig|NULLOK siginfo_t *info|NULLOK void *uap
 #else
-np	|Signal_t |sighandler	|int sig
-Anp	|Signal_t |csighandler	|int sig
+np	|Signal_t __cdecl|sighandler	|int sig
+Anp	|Signal_t __cdecl|csighandler	|int sig
 #endif
 Ap	|SV**	|stack_grow	|NN SV** sp|NN SV** p|int n
 Ap	|I32	|start_subparse	|I32 is_format|U32 flags

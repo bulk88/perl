@@ -439,7 +439,7 @@ typedef struct {
 #endif
 
 #ifndef Sighandler_t
-typedef Signal_t (*Sighandler_t) (int);
+typedef Signal_t (__cdecl *Sighandler_t) (int);
 #define Sighandler_t	Sighandler_t
 #endif
 

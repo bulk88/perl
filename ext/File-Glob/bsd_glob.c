@@ -160,8 +160,8 @@ typedef U8 Char;
 #define	ismeta(c)	(((c)&M_QUOTE) != 0)
 
 
-static int	 compare(const void *, const void *);
-static int	 ci_compare(const void *, const void *);
+static int	 __cdecl compare(const void *, const void *);
+static int	 __cdecl ci_compare(const void *, const void *);
 static int	 g_Ctoc(const Char *, char *, STRLEN);
 static int	 g_lstat(Char *, Stat_t *, glob_t *);
 static DIR	*g_opendir(Char *, glob_t *);
@@ -610,7 +610,7 @@ glob0(const Char *pattern, glob_t *pglob)
 	return(0);
 }
 
-static int
+static int __cdecl
 ci_compare(const void *p, const void *q)
 {
 	const char *pp = *(const char **)p;
@@ -628,7 +628,7 @@ ci_compare(const void *p, const void *q)
 	return ci;
 }
 
-static int
+static int __cdecl
 compare(const void *p, const void *q)
 {
 	return(strcmp(*(char **)p, *(char **)q));

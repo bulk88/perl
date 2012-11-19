@@ -535,7 +535,7 @@ typedef U16 cv_flags_t;
     }		xcv_start_u;					    		\
     union {									\
 	OP *	xcv_root;							\
-	void	(*xcv_xsub) (pTHX_ CV*);					\
+	void	(__fastcall *xcv_xsub) (pTHX_ CV*);					\
     }		xcv_root_u;							\
     union {								\
 	GV *	xcv_gv;							\
