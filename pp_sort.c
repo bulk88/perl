@@ -2008,35 +2008,74 @@ S_amagic_cmp_locale(pTHX_ SV *const str1, SV *const str2)
  * step in pp_sort. In fact, that might make tons of sense since it
  * could include moving the inner-magic check out of the O(nlogn) part.
  */
-#define REUSABLE_DEREF_BODY                                     \
-    STMT_START {                                                \
-	SvGETMAGIC(a); /* FIXME check for this outside the */   \
-	SvGETMAGIC(b); /*       sort function somehow */        \
-	if (!SvROK(a) || !SvROK(b)) {                           \
-	    Perl_croak(aTHX_ "Not an ARRAY reference");         \
-	}                                                       \
-	a = SvRV(a);                                            \
-	b = SvRV(b);                                            \
-	if (SvTYPE(a) != SVt_PVAV || SvTYPE(a) != SVt_PVAV) {   \
-	    Perl_croak(aTHX_ "Not an ARRAY reference");         \
-	}                                                       \
-	elem1 = Perl_av_fetch(aTHX_ (AV*)a, 0, 0);              \
-	elem2 = Perl_av_fetch(aTHX_ (AV*)b, 0, 0);              \
-	if (*elem1 == &PL_sv_undef) {				\
-	    mg_get(*elem1);					\
-	}							\
-	if (*elem2 == &PL_sv_undef) {				\
-	    mg_get(*elem2);					\
-	}							\
+typedef struct {
+    SV ** elem1;
+    SV ** elem2;
+} dref_ret;
+
+#define REUSABLE_DEREF_BODY \
+STMT_START { \
+    dref_ret x_dref_ref = S_sort_deref_body(aTHX_ a, b); \
+    elem1= x_dref_ref.elem1; \
+    elem2= x_dref_ref.elem2; \
     } STMT_END
 
+dref_ret S_sort_deref_body(pTHX_ SV * a, SV * b) {
+        dref_ret ret;
+        SV ** (*arr) [2] = sv_grow(sv_newmortal(), 8);
+	SvGETMAGIC(a); /* FIXME check for this outside the */   
+	SvGETMAGIC(b); /*       sort function somehow */        
+	if (!SvROK(a) || !SvROK(b)) {                           
+	    Perl_croak(aTHX_ "Not an ARRAY reference");         
+	}                                                       
+	a = SvRV(a);                                            
+	b = SvRV(b);                                            
+	if (SvTYPE(a) != SVt_PVAV || SvTYPE(a) != SVt_PVAV) {   
+	    Perl_croak(aTHX_ "Not an ARRAY reference");         
+	}                                                       
+	ret.elem1 = Perl_av_fetch(aTHX_ (AV*)a, 0, 0);              
+	ret.elem2 = Perl_av_fetch(aTHX_ (AV*)b, 0, 0);
+        if(ret.elem1 == NULL) {
+            ret.elem1 = &arr[0];
+            *ret.elem1 = &PL_sv_undef;
+        }
+        SvGETMAGIC(*ret.elem1);
+        if(ret.elem2 == NULL) {
+            ret.elem2 = &arr[1];
+            *ret.elem2 = &PL_sv_undef;
+        }
+        SvGETMAGIC(*ret.elem1);
+        return ret;
+    }
+
+#define DEFEFHOOK
+/*
+#define DEFEFHOOK \
+if(! ((my_perl->Icurcop->cop_line == 554 && my_perl->Icurcop->cop_file \
+          && *((__int64 *)my_perl->Icurcop->cop_file) == *((__int64 *)"../lib/u") \
+          && *((__int64 *)(my_perl->Icurcop->cop_file + sizeof(__int64))) \
+               == *((__int64 *)"tf8_heav")) \
+      || \
+     (my_perl->Icurcop->cop_line == 99 && my_perl->Icurcop->cop_file \
+          && *((__int64 *)my_perl->Icurcop->cop_file) == *((__int64 *)"Porting/") \
+          && *((__int64 *)(my_perl->Icurcop->cop_file + sizeof(__int64))) \
+               == *((__int64 *)"pod_rule")) \
+    ||      \
+     (my_perl->Icurcop->cop_line == 870 && my_perl->Icurcop->cop_file \
+          && *((__int64 *)my_perl->Icurcop->cop_file) == *((__int64 *)"regen/re") \
+          && *((__int64 *)(my_perl->Icurcop->cop_file + sizeof(__int64))) \
+               == *((__int64 *)"gcharcla")) \
+)){ \
+        DebugBreak(); \
+    }
+ */
 /* sort function for float {$a->[0] <=> $b->[0]} */
 static I32
 S_sv_ncmp_deref(pTHX_ SV *a, SV *b)
 {
     SV **elem1, **elem2;
     SV *tmpsv;
-
+    DEFEFHOOK
     PERL_ARGS_ASSERT_SV_NCMP_DEREF;
 
     REUSABLE_DEREF_BODY;
@@ -2055,7 +2094,7 @@ S_sv_i_ncmp_deref(pTHX_ SV *a, SV *b)
 {
     SV **elem1, **elem2;
     SV *tmpsv;
-
+    DEFEFHOOK
     PERL_ARGS_ASSERT_SV_I_NCMP_DEREF;
 
     REUSABLE_DEREF_BODY;
@@ -2074,7 +2113,7 @@ S_sv_cmp_deref(pTHX_ SV *a, SV *b)
 {
     SV **elem1, **elem2;
     SV *tmpsv;
-
+    DEFEFHOOK
     PERL_ARGS_ASSERT_SV_CMP_DEREF;
 
     REUSABLE_DEREF_BODY;
@@ -2093,7 +2132,7 @@ S_sv_cmp_locale_deref(pTHX_ SV *a, SV *b)
 {
     SV **elem1, **elem2;
     SV *tmpsv;
-
+    DEFEFHOOK
     PERL_ARGS_ASSERT_SV_CMP_LOCALE_DEREF;
 
     REUSABLE_DEREF_BODY;
