@@ -2023,16 +2023,34 @@ STMT_START { \
 dref_ret S_sort_deref_body(pTHX_ SV * a, SV * b) {
         dref_ret ret;
         SV ** (*arr) [2] = sv_grow(sv_newmortal(), 8);
-	SvGETMAGIC(a); /* FIXME check for this outside the */   
-	SvGETMAGIC(b); /*       sort function somehow */        
-	if (!SvROK(a) || !SvROK(b)) {                           
-	    Perl_croak(aTHX_ "Not an ARRAY reference");         
-	}                                                       
-	a = SvRV(a);                                            
-	b = SvRV(b);                                            
-	if (SvTYPE(a) != SVt_PVAV || SvTYPE(a) != SVt_PVAV) {   
-	    Perl_croak(aTHX_ "Not an ARRAY reference");         
-	}                                                       
+        /* SvROK and SvGMAGICAL inlined */
+        if((SvFLAGS(a) & (SVf_ROK | SVs_GMG)) != SVf_ROK
+            || SvTYPE(SvRV(a)) != SVt_PVAV
+            /* SvAMAGIC inlined */
+            || (SvOBJECT(SvRV(a)) && HvAMAGIC(SvSTASH(SvRV(a))))) {
+            a = script_deref(a, SVt_PVAV);
+        }
+        else {
+            a = SvRV(a);
+        }
+        if( SvFLAGS(b) & (SVf_ROK | SVs_GMG) != SVf_ROK
+            || SvTYPE(SvRV(b)) != SVt_PVAV
+            || (SvOBJECT(SvRV(b)) && HvAMAGIC(SvSTASH(SvRV(b))))) {
+            b = script_deref(b, SVt_PVAV);
+        }
+        else {
+            b = SvRV(b);
+        }
+	//SvGETMAGIC(a); /* FIXME check for this outside the */   
+	//SvGETMAGIC(b); /*       sort function somehow */        
+	//if (!SvROK(a) || !SvROK(b)) {                           
+	//    Perl_croak(aTHX_ "Not an ARRAY reference");         
+	//}                                                       
+	//a = SvRV(a);                                            
+	//b = SvRV(b);                                            
+	//if (SvTYPE(a) != SVt_PVAV || SvTYPE(a) != SVt_PVAV) {   
+	//    Perl_croak(aTHX_ "Not an ARRAY reference");         
+	//}                                                       
 	ret.elem1 = Perl_av_fetch(aTHX_ (AV*)a, 0, 0);              
 	ret.elem2 = Perl_av_fetch(aTHX_ (AV*)b, 0, 0);
         if(ret.elem1 == NULL) {
@@ -2044,7 +2062,7 @@ dref_ret S_sort_deref_body(pTHX_ SV * a, SV * b) {
             ret.elem2 = &arr[1];
             *ret.elem2 = &PL_sv_undef;
         }
-        SvGETMAGIC(*ret.elem1);
+        SvGETMAGIC(*ret.elem2);
         return ret;
     }
 
@@ -2144,6 +2162,7 @@ S_sv_cmp_locale_deref(pTHX_ SV *a, SV *b)
 
     return ((SVCOMPARE_t)sv_cmp_locale_static)(aTHX_ *elem1, *elem2);
 }
+
 
 /*
  * Local variables:

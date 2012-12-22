@@ -308,6 +308,43 @@ PP(pp_rv2gv)
     RETURN;
 }
 
+/* no idea about whether to stop autovivification if a GV/str passed*/
+SV *
+Perl_script_deref(pTHX_ SV * const rv, const svtype type) {
+    SV * retsv;
+    UNOP myop;
+    OP* oldop;
+    if(type != SVt_PVHV && type != SVt_PVAV)
+        Perl_croak_nocontext("Perl_script_deref: unsupported type");
+    {
+    dSP;
+    EXTEND(SP, 1);
+    PUSHs(rv);
+    PUTBACK;
+    /* SP optimized away after here */
+    Zero(&myop, 1, UNOP);
+    myop.op_flags |= OPf_REF | OPf_WANT_SCALAR;
+    /* if more types like CVs are added, expand this */
+    myop.op_type = type == SVt_PVAV ? OP_RV2AV : OP_RV2HV;
+    /* do all ops have HINT_STRICT_REFS in op_private or only ops which
+       are aware of HINT_STRICT_REFS ? pp_sort didn't have the flag, the below
+       works for unknown to me reasons*/
+    myop.op_private = CopHINTS_get(PL_curcop) & HINT_STRICT_REFS;
+    oldop = PL_op;
+    SAVEOP();
+    PL_op = (OP*)&myop;
+    PL_ppaddr[OP_RV2AV](aTHX);
+    PL_op = oldop;
+    /* oldop optimized away now */
+    SPAGAIN;
+    retsv = POPs;
+    //assert(SvTYPE(retsv) == type);
+    if(SvTYPE(retsv) != type)
+        Perl_croak_nocontext("bad returned sv");
+    return retsv;
+    }
+}
+
 /* Helper function for pp_rv2sv and pp_rv2av  */
 GV *
 Perl_softref2xv(pTHX_ SV *const sv, const char *const what,

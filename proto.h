@@ -3627,6 +3627,11 @@ PERL_CALLCONV char*	Perl_screaminstr(pTHX_ SV *bigstr, SV *littlestr, I32 start_
 #define PERL_ARGS_ASSERT_SCREAMINSTR	\
 	assert(bigstr); assert(littlestr); assert(old_posp)
 
+PERL_CALLCONV SV*	Perl_script_deref(pTHX_ SV * const rv, const svtype type)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_SCRIPT_DEREF	\
+	assert(rv)
+
 PERL_CALLCONV U32	Perl_seed(pTHX);
 PERL_CALLCONV void	Perl_set_context(void *t)
 			__attribute__nonnull__(1);

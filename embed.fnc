@@ -1843,6 +1843,7 @@ s	|void	|do_chomp	|NN SV *retval|NN SV *sv|bool chomping
 s	|OP*	|do_delete_local
 sR	|SV*	|refto		|NN SV* sv
 #endif
+pxM	|SV*	|script_deref	|NN SV * const rv|const svtype type
 #if defined(PERL_IN_PP_C) || defined(PERL_IN_PP_HOT_C)
 : Used in pp_hot.c
 pRxo	|GV*	|softref2xv	|NN SV *const sv|NN const char *const what \
