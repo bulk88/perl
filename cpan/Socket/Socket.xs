@@ -44,8 +44,8 @@
 #  include <netinet/tcp.h>
 #endif
 
-#ifdef WIN32
-# include <ws2tcpip.h>
+#if defined(WIN32) && ! defined(UNDER_CE)
+#  include <ws2tcpip.h>
 #endif
 
 #ifdef NETWARE

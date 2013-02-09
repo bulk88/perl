@@ -1,7 +1,7 @@
 use ExtUtils::MakeMaker;
 use Config;
 use strict;
-
+warn "$INC{INCLUDE}";
 our $VERSION = "1.18";
 
 my %err = ();
@@ -170,6 +170,7 @@ sub get_files {
 
 	# invoke CPP and read the output
 	if ($IsMSWin32 || $^O eq 'NetWare') {
+            warn "$Config{cpprun} $Config{cppflags} errno.c | $INC{INCLUDE}";
 	    open(CPPO,"$Config{cpprun} $Config{cppflags} errno.c |") or
 		die "Cannot run '$Config{cpprun} $Config{cppflags} errno.c'";
 	} else {

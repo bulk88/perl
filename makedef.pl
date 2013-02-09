@@ -88,12 +88,39 @@ process_cc_flags(@Config{qw(ccflags optimize)})
 # minimal configs that don't include any of those options.
 
 #don't use the host Perl's -V defines for the WinCE Perl
-if($ARGS{PLATFORM} ne 'wince') {
-    my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+{
+    my @options;
+    if($ARGS{PLATFORM} ne 'wince') {
+        @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+    } else {
+        open(my $FD, '<', '../globals.i') || die "Cannot open globals.i: $!\n";
+        local($/);
+        my $globals_i = <$FD>;
+        close($FD);
+        my $startpos = index($globals_i, 'char PL_bincompat_options[] =');
+        die 'can not find PL_bincompat_options definition in globals.i'
+            if $startpos == -1;
+        my $endpos = index($globals_i,';',$startpos);
+        die 'can not find PL_bincompat_options definition in globals.i'
+            if $endpos == -1;
+        my $bincompat_def = substr($globals_i, $startpos, length($globals_i)-$endpos);
+        @options = $bincompat_def =~ m/^\s*"\s(\w+)"\s*$/mg;
+        open($FD, '<', '../perl.i') || die "Cannot open perl.i: $!\n";
+        my $perl_i = <$FD>;
+        close($FD);
+        $startpos = index($perl_i, 'static const char non_bincompat_options[] =');
+        die 'can not find non_bincompat_options definition in perl.i'
+            if $startpos == -1;
+        $endpos = index($perl_i,';',$startpos);
+        die 'can not find non_bincompat_options definition in perl.i'
+            if $endpos == -1;
+        my $non_bincompat_def = substr($perl_i, $startpos, length($perl_i)-$endpos);
+        push(@options, $non_bincompat_def =~ m/^\s*"\s(\w+)"\s*$/mg);
+        @options = sort(@options);
+    }
     print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
     $define{$_} = 1 foreach @options;
 }
-
 my %exportperlmalloc =
     (
        Perl_malloc		=>	"malloc",

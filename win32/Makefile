@@ -21,7 +21,7 @@
 # newly built perl.
 #
 INST_DRV	= c:
-INST_TOP	= $(INST_DRV)\perl
+INST_TOP	= $(INST_DRV)\p517\ceinst
 
 #
 # Uncomment if you want to build a 32-bit Perl using a 32-bit compiler
@@ -102,9 +102,9 @@ USE_LARGE_FILES	= define
 # uncomment exactly one of the following
 #
 # Visual C++ 6.x (aka Visual C++ 98)
-CCTYPE		= MSVC60
+#CCTYPE		= MSVC60
 # Visual C++ .NET 2002/2003 (aka Visual C++ 7.x) (full version)
-#CCTYPE		= MSVC70
+CCTYPE		= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.x) (free command-line tools)
 #CCTYPE		= MSVC70FREE
 # Windows Server 2003 SP1 Platform SDK (April 2005)
@@ -430,7 +430,7 @@ LINK_DBG	= -debug
 !ELSE
 OPTIMIZE	= -MD -Zi -DNDEBUG
 # we enable debug symbols in release builds also
-LINK_DBG	= -debug -opt:ref,icf
+LINK_DBG	= -debug -opt:ref,icf -ltcg
 # you may want to enable this if you want COFF symbols in the executables
 # in addition to the PDB symbols.  The default Dr. Watson that ships with
 # Windows can use the the former but not latter.  The free WinDbg can be
@@ -443,7 +443,7 @@ OPTIMIZE	= $(OPTIMIZE) -Ox -GL
 LINK_DBG	= $(LINK_DBG) -ltcg
 !  ELSE
 # -O1 yields smaller code, which turns out to be faster than -O2 on x86
-OPTIMIZE	= $(OPTIMIZE) -O1
+OPTIMIZE	= $(OPTIMIZE) -O1 -GL
 #OPTIMIZE	= $(OPTIMIZE) -O2
 !  ENDIF
 !ENDIF

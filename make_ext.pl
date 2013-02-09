@@ -8,6 +8,7 @@ my $is_VMS = $^O eq 'VMS';
 my $is_Unix = !$is_Win32 && !$is_VMS;
 
 my @ext_dirs = qw(cpan dist ext);
+#if($is_Win32){  $_ = '.\\' . $_ for(@ext_dirs);}
 my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
 
 # This script acts as a simple interface for building extensions.
@@ -45,6 +46,7 @@ my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
 # If any extensions are listed with a '+' char then only those
 # extensions will be built, but only if they arent countermanded
 # by an '!ext' and are appropriate to the type of building being done.
+# An extensions follows the format of Foo/Bar, which would be extension Foo::Bar
 
 # It may be deleted in a later release of perl so try to
 # avoid using it for other purposes.
@@ -157,9 +159,9 @@ if ($is_Win32) {
 	system(@args) unless defined $::Cross::platform;
     }
 
-    print "In $build";
+    print "In $build ";
     foreach my $dir (@dirs) {
-	chdir($dir) or die "Cannot cd to $dir: $!\n";
+	chdir($dir) or die "(Is_Win32) Cannot cd to $dir: $!\n";
 	(my $ext = Cwd::getcwd()) =~ s{/}{\\}g;
 	FindExt::scan_ext($ext);
 	FindExt::set_static_extensions(split ' ', $Config{static_ext});
@@ -226,11 +228,12 @@ foreach my $spec (@extspec)  {
     my $mname = $spec;
     $mname =~ s!/!::!g;
     my $ext_pathname;
-
+    warn "cwd is ".Cwd::getcwd();
     # Try new style ext/Data-Dumper/ first
     my $copy = $spec;
     $copy =~ tr!/!-!;
     foreach my $dir (@ext_dirs) {
+        warn "trying $dir/$copy";
 	if (-d "$dir/$copy") {
 	    $ext_pathname = "$dir/$copy";
 	    last;
@@ -238,6 +241,7 @@ foreach my $spec (@extspec)  {
     }
 
     if (!defined $ext_pathname) {
+        warn "trying ext/$spec";
 	if (-d "ext/$spec") {
 	    # Old style ext/Data/Dumper/
 	    $ext_pathname = "ext/$spec";
@@ -257,7 +261,7 @@ sub build_extension {
     my ($ext_dir, $perl, $mname, $pass_through) = @_;
 
     unless (chdir "$ext_dir") {
-	warn "Cannot cd to $ext_dir: $!";
+	warn "(build_extension) Cannot cd to $ext_dir: $!";
 	return;
     }
 
@@ -426,6 +430,7 @@ EOM
 	push @args, @$pass_through;
 	_quote_args(\@args) if $is_VMS;
 	print join(' ', @run, $perl, @args), "\n";
+
 	my $code = system @run, $perl, @args;
 	warn "$code from $ext_dir\'s Makefile.PL" if $code;
 
@@ -489,7 +494,7 @@ EOS
     my $code = system(@run, @make, @targ);
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
-    chdir $return_dir || die "Cannot cd to $return_dir: $!";
+    chdir $return_dir || die "(build_extension return) Cannot cd to $return_dir: $!";
 }
 
 sub _quote_args {

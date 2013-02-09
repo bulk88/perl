@@ -1196,6 +1196,21 @@ EXTERN_C int usleep(unsigned int);
 #   include <netinet/in.h>
 #endif
 
+
+/* on WinCE with celib, this will trigger a windows.h include, long before
+   wince.h or win32.h are included, and there is no WIN32_LEAN_AND_MEAN on CE
+   SDK, but WINCEMACRO does supress ole2.h which has a "#define interface" in
+   it, Desktop Win32 Perl uses WIN32_LEAN_AND_MEAN to prevent ole2.h from being
+   loaded. On Desktop, winnt.h includes guiddef.h, but on CE winnt.h defines
+   its own GUID struct, sets GUID_DEFINED to prevent inclusion of guiddef.h, but
+   forgets to make LPGUID type. This causes a syntax error in winsock2.h with
+   LPGUID undefined.
+   */
+#ifdef UNDER_CE
+#  define WINCEMACRO
+#  include <guiddef.h>
+#endif
+
 #ifdef I_ARPA_INET
 #   include <arpa/inet.h>
 #endif

@@ -1329,7 +1329,14 @@ XS(w32_Spawn)
     memset(&stStartInfo, 0, sizeof(stStartInfo));   /* Clear the block */
     stStartInfo.cb = sizeof(stStartInfo);	    /* Set the structure size */
     stStartInfo.dwFlags = STARTF_USESHOWWINDOW;	    /* Enable wShowWindow control */
-    stStartInfo.wShowWindow = SW_SHOWMINNOACTIVE;   /* Start min (normal) */
+    stStartInfo.wShowWindow =
+/* SW_SHOWMINNOACTIVE doesn't exist on WinCE */
+#ifdef UNDER_CE
+        SW_HIDE;
+#else
+        SW_SHOWMINNOACTIVE;   /* Start min (normal) */
+#endif
+
 
     if (CreateProcess(
 		cmd,			/* Image path */
@@ -1337,7 +1344,15 @@ XS(w32_Spawn)
 		NULL,			/* Default process security */
 		NULL,			/* Default thread security */
 		FALSE,			/* Must be TRUE to use std handles */
+#ifdef UNDER_CE
+#  ifdef INHERIT_CALLER_PRIORITY
+		INHERIT_CALLER_PRIORITY,/* no priority classes on CE, CE >= 5.0 */
+#  else
+		0,			/* CE < 5.0 */
+#  endif
+#else
 		NORMAL_PRIORITY_CLASS,	/* No special scheduling */
+#endif
 		env,			/* Inherit our environment block */
 		dir,			/* Inherit our currrent directory */
 		&stStartInfo,		/* -> Startup info */

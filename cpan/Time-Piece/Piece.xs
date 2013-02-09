@@ -131,8 +131,10 @@ my_init_tm(struct tm *ptm)        /* see mktime, strftime and asctime    */
  * so this memory must otherwise be leaked.
  */
 
-#undef getenv
-#undef putenv
+#ifndef UNDER_CE
+#  undef getenv
+#  undef putenv
+#endif
 #undef malloc
 #undef free
 
