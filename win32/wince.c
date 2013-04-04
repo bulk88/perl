@@ -1561,7 +1561,7 @@ win32_tmpfile(void)
     return NULL;
 }
 
-DllExport void
+DllExportFwd void
 win32_abort(void)
 {
   xceabort();
@@ -2340,25 +2340,25 @@ sbrk(int need)
 #endif
 #endif
 
-DllExport void*
+DllExportFwd void*
 win32_malloc(size_t size)
 {
     return malloc(size);
 }
 
-DllExport void*
+DllExportFwd void*
 win32_calloc(size_t numitems, size_t size)
 {
     return calloc(numitems,size);
 }
 
-DllExport void*
+DllExportFwd void*
 win32_realloc(void *block, size_t size)
 {
     return realloc(block,size);
 }
 
-DllExport void
+DllExportFwd void
 win32_free(void *block)
 {
     free(block);

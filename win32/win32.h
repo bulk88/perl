@@ -81,13 +81,24 @@
 /* miniperl has no reason to export anything */
 #if defined(PERL_IS_MINIPERL) && !defined(UNDER_CE) && defined(_MSC_VER)
 #  define DllExport
+#  define DllExportFwd
 #else
 #  if defined(PERLDLL)
 #    define DllExport __declspec(dllexport)
+/*   GCC Perl isn't set up to do PE forwarding. Don't export win32_* stubs if
+     using PE forwarding. */
+#    ifdef _MSC_VER
+#      define DllExportFwd
+#    else
+/*     export the stubs in win32.c i.e. GCC*/
+#      define DllExportFwd __declspec(dllexport)
+#    endif
 #  else
 #    define DllExport __declspec(dllimport)
+#    define DllExportFwd __declspec(dllimport)
 #  endif
 #endif
+
 
 /* The Perl APIs can only be called directly inside the perl5xx.dll.
  * All other code has to import them.  By declaring them as "dllimport"
@@ -179,6 +190,18 @@ struct utsname {
     char version[SYS_NMLN];
     char machine[SYS_NMLN];
 };
+
+/*
+ * Control structure for lowio file handles
+ */
+typedef struct {
+    intptr_t osfhnd;/* underlying OS file HANDLE */
+    char osfile;    /* attributes of file (e.g., open in text mode?) */
+    char pipech;    /* one char buffer for handles opened on pipes */
+    int lockinitflag;
+    CRITICAL_SECTION lock;
+} ioinfo;
+
 
 #ifndef START_EXTERN_C
 #undef EXTERN_C

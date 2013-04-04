@@ -18,6 +18,9 @@
 #define NO_XSLOCKS
 #include "XSUB.h"
 
+void __pioinfo(void) {
+    0;
+}
 
 /* Bottom-most level for Win32 case */
 

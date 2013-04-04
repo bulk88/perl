@@ -2654,25 +2654,25 @@ win32_printf(const char *format, ...)
     return (vprintf(format, marker));
 }
 
-DllExport int
+DllExportFwd int
 win32_vfprintf(FILE *fp, const char *format, va_list args)
 {
     return (vfprintf(fp, format, args));
 }
 
-DllExport int
+DllExportFwd int
 win32_vprintf(const char *format, va_list args)
 {
     return (vprintf(format, args));
 }
 
-DllExport size_t
+DllExportFwd size_t
 win32_fread(void *buf, size_t size, size_t count, FILE *fp)
 {
     return fread(buf, size, count, fp);
 }
 
-DllExport size_t
+DllExportFwd size_t
 win32_fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 {
     return fwrite(buf, size, count, fp);
@@ -2732,44 +2732,44 @@ win32_fclose(FILE *pf)
 #endif
 }
 
-DllExport int
+DllExportFwd int
 win32_fputs(const char *s,FILE *pf)
 {
     return fputs(s, pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_fputc(int c,FILE *pf)
 {
     return fputc(c,pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_ungetc(int c,FILE *pf)
 {
     return ungetc(c,pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_getc(FILE *pf)
 {
     return getc(pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_fileno(FILE *pf)
 {
     return fileno(pf);
 }
 
-DllExport void
+DllExportFwd void
 win32_clearerr(FILE *pf)
 {
     clearerr(pf);
     return;
 }
 
-DllExport int
+DllExportFwd int
 win32_fflush(FILE *pf)
 {
     return fflush(pf);
@@ -2816,19 +2816,19 @@ win32_fseek(FILE *pf, Off_t offset,int origin)
 #endif
 }
 
-DllExport int
+DllExportFwd int
 win32_fgetpos(FILE *pf,fpos_t *p)
 {
     return fgetpos(pf, p);
 }
 
-DllExport int
+DllExportFwd int
 win32_fsetpos(FILE *pf,const fpos_t *p)
 {
     return fsetpos(pf, p);
 }
 
-DllExport void
+DllExportFwd void
 win32_rewind(FILE *pf)
 {
     rewind(pf);
@@ -2874,7 +2874,7 @@ win32_tmpfile(void)
     return NULL;
 }
 
-DllExport void
+DllExportFwd void
 win32_abort(void)
 {
     abort();
@@ -2891,7 +2891,7 @@ win32_fstat(int fd, Stat_t *sbufptr)
 #endif
 }
 
-DllExport int
+DllExportFwd int
 win32_pipe(int *pfd, unsigned int size, int mode)
 {
     return _pipe(pfd, size, mode);
@@ -3148,7 +3148,7 @@ win32_rename(const char *oname, const char *newname)
     return 0;
 }
 
-DllExport int
+DllExportFwd int
 win32_setmode(int fd, int mode)
 {
     return setmode(fd, mode);
@@ -3254,7 +3254,7 @@ win32_close(int fd)
 #endif
 }
 
-DllExport int
+DllExportFwd int
 win32_eof(int fd)
 {
     return eof(fd);
@@ -3281,25 +3281,25 @@ win32_isatty(int fd)
     return 0;
 }
 
-DllExport int
+DllExportFwd int
 win32_dup(int fd)
 {
     return dup(fd);
 }
 
-DllExport int
+DllExportFwd int
 win32_dup2(int fd1,int fd2)
 {
     return dup2(fd1,fd2);
 }
 
-DllExport int
+DllExportFwd int
 win32_read(int fd, void *buf, unsigned int cnt)
 {
     return read(fd, buf, cnt);
 }
 
-DllExport int
+DllExportFwd int
 win32_write(int fd, const void *buf, unsigned int cnt)
 {
     return write(fd, buf, cnt);
@@ -3848,73 +3848,73 @@ win32_execvp(const char *cmdname, const char *const *argv)
     return execvp(cmdname, argv);
 }
 
-DllExport void
+DllExportFwd void
 win32_perror(const char *str)
 {
     perror(str);
 }
 
-DllExport void
+DllExportFwd void
 win32_setbuf(FILE *pf, char *buf)
 {
     setbuf(pf, buf);
 }
 
-DllExport int
+DllExportFwd int
 win32_setvbuf(FILE *pf, char *buf, int type, size_t size)
 {
     return setvbuf(pf, buf, type, size);
 }
 
-DllExport int
+DllExportFwd int
 win32_flushall(void)
 {
     return flushall();
 }
 
-DllExport int
+DllExportFwd int
 win32_fcloseall(void)
 {
     return fcloseall();
 }
 
-DllExport char*
+DllExportFwd char*
 win32_fgets(char *s, int n, FILE *pf)
 {
     return fgets(s, n, pf);
 }
 
-DllExport char*
+DllExportFwd char*
 win32_gets(char *s)
 {
     return gets(s);
 }
 
-DllExport int
+DllExportFwd int
 win32_fgetc(FILE *pf)
 {
     return fgetc(pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_putc(int c, FILE *pf)
 {
     return putc(c,pf);
 }
 
-DllExport int
+DllExportFwd int
 win32_puts(const char *s)
 {
     return puts(s);
 }
 
-DllExport int
+DllExportFwd int
 win32_getchar(void)
 {
     return getchar();
 }
 
-DllExport int
+DllExportFwd int
 win32_putchar(int c)
 {
     return putchar(c);
@@ -4018,41 +4018,67 @@ sbrk_reserve:
 #endif
 #endif
 
-DllExport void*
+
+#pragma comment(linker,"/export:_win32_malloc=MSVCR71.malloc")
+#pragma comment(linker,"/export:_win32_calloc=MSVCR71.calloc")
+#pragma comment(linker,"/export:_win32_realloc=MSVCR71.realloc")
+#pragma comment(linker,"/export:_win32_free=MSVCR71.free")
+
+
+DllExportFwd void*
 win32_malloc(size_t size)
 {
     return malloc(size);
 }
 
-DllExport void*
+DllExportFwd void*
 win32_calloc(size_t numitems, size_t size)
 {
     return calloc(numitems,size);
 }
 
-DllExport void*
+DllExportFwd void*
 win32_realloc(void *block, size_t size)
 {
     return realloc(block,size);
 }
 
-DllExport void
+DllExportFwd void
 win32_free(void *block)
 {
     free(block);
 }
 
 
-DllExport int
+DllExportFwd int
 win32_open_osfhandle(intptr_t handle, int flags)
 {
     return _open_osfhandle(handle, flags);
 }
 
-DllExport intptr_t
+DllExportFwd intptr_t
 win32_get_osfhandle(int fd)
 {
     return (intptr_t)_get_osfhandle(fd);
+}
+
+
+/*
+ * Array of arrays of control structures for lowio files.
+ */
+EXTERN_C __declspec(dllimport) ioinfo* __pioinfo[];
+
+DllExport ioinfo*
+win32_get_pioinfo(void)
+{
+    return __pioinfo;
+}
+
+/* for testing DLL export forwarding */
+DllExportFwd intptr_t
+win32_get_heap_handle(void)
+{
+    return _get_heap_handle();
 }
 
 DllExport FILE *
@@ -4143,6 +4169,16 @@ XS(w32_SetChildShowWindow)
     XSRETURN(1);
 }
 
+XS(w32__get_heap_handle)
+{
+    intptr_t hnd = _get_heap_handle();
+    SV * ret = sv_2mortal(newSViv(hnd));
+    dXSARGS;
+    EXTEND(SP,1);
+    ST(0) = ret;
+    XSRETURN(1);
+}
+
 void
 Perl_init_os_extras(void)
 {
@@ -4161,6 +4197,7 @@ Perl_init_os_extras(void)
 #endif
 
     newXS("Win32::SetChildShowWindow", w32_SetChildShowWindow, file);
+    newXS("Win32::_get_heap_handle", w32__get_heap_handle , file);
 }
 
 void *

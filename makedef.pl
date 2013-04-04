@@ -87,12 +87,9 @@ process_cc_flags(@Config{qw(ccflags optimize)})
 # the user might have chosen to disable because the canned configs are
 # minimal configs that don't include any of those options.
 
-#don't use the host Perl's -V defines for the WinCE Perl
-if($ARGS{PLATFORM} ne 'wince') {
-    my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
-    print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
-    $define{$_} = 1 foreach @options;
-}
+my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
+$define{$_} = 1 foreach @options;
 
 my %exportperlmalloc =
     (
@@ -104,8 +101,7 @@ my %exportperlmalloc =
 
 my $exportperlmalloc = $ARGS{PLATFORM} eq 'os2';
 
-my $config_h = $ARGS{PLATFORM} eq 'wince' ? 'xconfig.h' : 'config.h';
-open(CFG, '<', $config_h) || die "Cannot open $config_h: $!\n";
+open(CFG, '<', 'config.h') || die "Cannot open config.h: $!\n";
 while (<CFG>) {
     $define{$1} = 1 if /^\s*\#\s*define\s+(MYMALLOC|MULTIPLICITY
                                            |SPRINTF_RETURNS_STRLEN
@@ -136,6 +132,8 @@ print STDERR "Defines: (" . join(' ', sort keys %define) . ")\n"
      unless $ARGS{PLATFORM} eq 'test';
 
 my $sym_ord = 0;
+
+my $cctype_is_msvc = !! ($ARGS{CCTYPE} =~ /^(?:MSVC|SDK|DDK)/);
 my %ordinal;
 
 if ($ARGS{PLATFORM} eq 'os2') {
@@ -153,6 +151,7 @@ if ($ARGS{PLATFORM} eq 'os2') {
 }
 
 my %skip;
+my %sym_alias;
 # All platforms export boot_DynaLoader unconditionally.
 my %export = ( boot_DynaLoader => 1 );
 
@@ -182,6 +181,38 @@ sub readvar {
 	my $symbol = $proc ? &$proc($1,$2,$3) : $var;
 	++$hash->{$symbol} unless exists $skip{$var};
     }
+}
+
+#void alias_exp($export_sym, $source_sym)
+#tells the linker that export name $export_sym is an alias for the symbol
+#named $source_sym, if $export_sym is also an actual non-static function, the
+#export entry will not cause $export_sym to be called from another SO/DLL.
+#This sub only has an effect on MSVC Windows builds. No other compilers or
+#platforms were tested.
+sub alias_exp {
+    die "alias_exp unimplemented" unless $cctype_is_msvc;
+    $sym_alias{$_[0]} = $_[1];
+}
+
+#from String::Escape
+use vars qw( %Backslashed %Interpolated );
+
+# Earlier definitions are preferred to later ones, thus we output \n not \x0d
+_define_backslash_escapes(
+	( map { $_ => $_ } ( '\\', '"', '$', '@' ) ),
+	( 'r' => "\r", 'n' => "\n", 't' => "\t" ),
+	( map { 'x' . unpack('H2', chr($_)) => chr($_) } (0..255) ),
+	( map { sprintf('%03o', $_) => chr($_) } (0..255) ),
+);
+
+sub _define_backslash_escapes {
+	%Interpolated = @_;
+	%Backslashed  = reverse @_;
+}
+sub unbackslash ($) {
+	local $_ = ( defined $_[0] ? $_[0] : '' );
+	s/ (\A|\G|[^\\]) [\\] ( [0]\d\d | [x][\da-fA-F]{2} | . ) / $1 . ( $Interpolated{lc($2) }) /gsxe;
+	return $_;
 }
 
 if ($ARGS{PLATFORM} ne 'os2') {
@@ -912,6 +943,7 @@ if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
 			    win32_chmod
 			    win32_open_osfhandle
 			    win32_get_osfhandle
+                            win32_get_heap_handle
 			    win32_ioctl
 			    win32_link
 			    win32_unlink
@@ -975,8 +1007,102 @@ if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
 			    win32_puts
 			    win32_getchar
 			    win32_putchar
+                            win32_get_pioinfo
+                            win32_pioinfo
 		 ));
+    #implement PE forwarding in the Perl DLL
+    if($cctype_is_msvc && $ARGS{PLATFORM} eq 'win32') {
+        #find out what CRT is being used from looking at what is probably miniperl
+        #this might also be a full perl which must (but this isn't checked)
+        #have been compiled with the same C compiler and libs
+        my $o = readpipe('dumpbin /imports "'.$^X .'"');
+        die "dumpbin tool didn't run" if
+            ($? >> 8) != 0
+            || index($o, ' COFF/PE Dumper') == -1
+            || index($o, 'File Type: EXECUTABLE IMAGE') == -1;
+        #every C lib using exe will have an exit because it is used in
+        #mainCRTstartup, a compiler linked non-Perl func
+        $o =~ /                  [[:xdigit:]]+ exit/;
+        substr($o, $-[0], length($o)-$-[0], '');
+        ($o =~ /.*    (\w+\.dll)/ims);
+        my $clibdll = $1;
+        #blacklist a couple not "a CRT"s and sanity check not false
+        #todo ban 2005 and 2008 due to sxs hazard, 2 different msvcr90 dlls
+        #can get loaded into the same process, or is this impossible policy redirect?
+        die "can't find CRT DLL in dumpbin output"
+            if !$clibdll || $clibdll =~ /kernel32|user32|advapi32|comctl32/i;
+        #have to strip ".dll" per trunk/reactos/dll/ntdll/ldr/ldrpe.c in reactos
+        #otherwise "dll.malloc" will be the function
+        $clibdll =~ s/\.dll//i;
+        foreach(qw(
+			    win32_malloc
+			    win32_calloc
+			    win32_realloc
+			    win32_free
+                            win32_open_osfhandle\x00_open_osfhandle
+                            win32_get_osfhandle\x00_get_osfhandle
+                            win32_pioinfo\x00__pioinfo
+                            win32_abort
+                            win32_clearerr
+                            win32_dup
+                            win32_dup2
+                            win32_eof
+                            win32_fcloseall
+                            win32_fflush
+                            win32_fgetc
+                            win32_fgetpos
+                            win32_fgets
+                            win32_fileno
+                            win32_flushall
+                            win32_fputc
+                            win32_fputs
+                            win32_fread
+                            win32_fsetpos
+                            win32_fwrite
+                            win32_getc
+                            win32_getchar
+                            win32_get_heap_handle\x00_get_heap_handle
+                            win32_gets
+                            win32_perror
+                            win32_pipe\x00_pipe
+                            win32_putc
+                            win32_putchar
+                            win32_puts
+                            win32_read
+                            win32_rewind
+                            win32_setbuf
+                            win32_setmode
+                            win32_setvbuf
+                            win32_ungetc
+                            win32_vfprintf
+                            win32_vprintf
+                            win32_write
+
+        )) {
+            #'\x00' not "\x00" is on purpose, it is not unescaped, maybe the
+            #tokens in qw will unescaped in future, can't use atleast @/#/$/./?
+            #since those are used for name mangling or have PE meaning (./#)
+            #the part following \x00 is the target func, when the source name
+            #can not be converted to the target func by loping off win32_.
+            #
+            my ($fwdnullpos, $sourceSym, $destSym) = index($_, '\x00') ;
+            ($sourceSym, $destSym) = $fwdnullpos == -1 ?
+                ($_, substr($_, length("win32_")))
+                : (substr($_, 0, $fwdnullpos), substr($_, $fwdnullpos + length('\x00')));
+            alias_exp($sourceSym,  $clibdll.'.'.$destSym);
+        }
+#these can not be forwarded even though in asm they are candidates
+#either their bodies are macro defed in win32.c, or their C lib implementation
+#is a macro and not a function (errno for example)
+                            #win32_environ
+                            #win32_errno
+                            #win32_fstat
+                            #win32_stdin
+                            #win32_stdout
+                            #win32_tell
+    }
 }
+
 elsif ($ARGS{PLATFORM} eq 'vms') {
     try_symbols(qw(
 		      Perl_cando
@@ -1358,10 +1484,13 @@ elsif ($ARGS{PLATFORM} eq 'netware') {
 my @symbols = $fold ? sort {lc $a cmp lc $b} keys %export : sort keys %export;
 foreach my $symbol (@symbols) {
     if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
-	print "\t$symbol\n";
+        #if($ARGS{CCTYPE} =~ /^(?:MSVC|SDK|DDK)/) {
+        print exists $sym_alias{$symbol} ?
+            "\t$symbol=$sym_alias{$symbol}\n"
+            : "\t$symbol\n";
     }
     elsif ($ARGS{PLATFORM} eq 'os2') {
-	printf qq(    %-31s \@%s\n),
+	printf qq(    %-31s \@%s\n),    
 	  qq("$symbol"), $ordinal{$symbol} || ++$sym_ord;
 	printf qq(    %-31s \@%s\n),
 	  qq("$exportperlmalloc{$symbol}" = "$symbol"),
