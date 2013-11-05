@@ -21,7 +21,7 @@
 # newly built perl.
 #
 INST_DRV	= c:
-INST_TOP	= $(INST_DRV)\perl
+INST_TOP	= $(INST_DRV)\perl519
 
 #
 # Uncomment if you want to build a 32-bit Perl using a 32-bit compiler
@@ -103,9 +103,9 @@ USE_LARGE_FILES	= define
 # uncomment exactly one of the following
 #
 # Visual C++ 6.x (aka Visual C++ 98)
-CCTYPE		= MSVC60
+#CCTYPE		= MSVC60
 # Visual C++ .NET 2002/2003 (aka Visual C++ 7.x) (full version)
-#CCTYPE		= MSVC70
+CCTYPE		= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.x) (free command-line tools)
 #CCTYPE		= MSVC70FREE
 # Windows Server 2003 SP1 Platform SDK (April 2005)
@@ -226,7 +226,7 @@ EXTRALIBDIRS	=
 # set this to your email address (perl will guess a value from
 # from your loginname and your hostname, which may not be right)
 #
-#EMAIL		=
+EMAIL		= bulk88@hotmail.com
 
 ##
 ## Build configuration ends.
