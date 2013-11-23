@@ -599,6 +599,35 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 
 /* since we are not doing a dup2(), this works fine */
 #  define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (intptr_t)osfh)
+
+/* derived from IsConsoleHandle macro, (((ULONG_PTR)(h) & 0x10000003) == 0x3)
+   if low 2 bits are 11, then its a console psuedo handle that only Win32
+   subsystem understands, not a kernel handle, a kernel handle ends in 00, we
+   reserve 10 to mean socket handle, starting in Windows 8 according to reports
+   online, console handles are kernel handles, low 2 bits behaviour on Win8
+   consone handles is unresearched, 0x80000000 catches negative values are
+   other psuedo handles or invalid handle, meaning behind flag 0x10000000 is
+   unknown, 01 can not be used since 01 handles are listed as FILE_TYPE_UNKNOWN,
+   and the handle is not passed to a kernel call to determine its type, this
+   causes _fstati64 to fail, making open() from PP fail when opening a numeric
+   fd that contains 01 tagged handle
+*/
+
+//static void
+//PerlIOUnix_setfd(pTHX_ PerlIO *f, int fd, int imode)
+//{
+//    PerlIOUnix * const s = PerlIOSelf(f, PerlIOUnix);
+//#if defined(WIN32)
+//    Stat_t st;
+//    if (PerlLIO_fstat(fd, &st) == 0) { <<<<< calls GetFileType in CRT which makes fstat fail
+//        
+#  define HANDLE_IS_SCK 0x2
+#  define PSUEDO_HANDLES_MASK 0x90000003
+#  define IS_PSUEDO_HANDLE(h) ((ULONG_PTR)(h) & PSUEDO_HANDLES_MASK)
+#  define SOCKET_FLAG_FROM_HANDLE(h) ((IS_PSUEDO_HANDLE(h) == HANDLE_IS_SCK) ? HANDLE_IS_SCK : 0x0)
+/* slow, and does failing kernel calls, use only in DEBUGGING */
+#  define PUBLIC_IS_SOCKET(h) (GetFileType(h) == FILE_TYPE_PIPE && GetNamedPipeInfo(h, 0, 0, 0, 0) == 0)
+
 #endif /* PERL_CORE */
 
 /* IO.xs and POSIX.xs define PERLIO_NOT_STDIO to 1 */

@@ -321,7 +321,10 @@ PerlIOWin32_dup(pTHX_ PerlIO *f, PerlIO *o, CLONE_PARAMS *params, int flags)
  if (DuplicateHandle(proc, os->h, proc, &new_h, 0, FALSE,  DUPLICATE_SAME_ACCESS))
   {
    char mode[8];
-   int fd = win32_open_osfhandle((intptr_t) new_h, PerlIOUnix_oflags(PerlIO_modestr(o,mode)));
+   int fd;
+   assert(!(SOCKET_FLAG_FROM_HANDLE(new_h) || IS_PSUEDO_HANDLE(new_h)));
+   *((ULONG_PTR *)&new_h) |= SOCKET_FLAG_FROM_HANDLE(os->h);
+   fd = win32_open_osfhandle((intptr_t) new_h, PerlIOUnix_oflags(PerlIO_modestr(o,mode)));
    if (fd >= 0)
     {
      f = PerlIOBase_dup(aTHX_ f, o, params, flags);

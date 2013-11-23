@@ -396,7 +396,11 @@ win32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
     SOCKET r;
 
     SOCKET_TEST((r = accept(TO_SOCKET(s), addr, addrlen)), INVALID_SOCKET);
-    return OPEN_SOCKET(r);
+    assert(!(SOCKET_FLAG_FROM_HANDLE(r) || IS_PSUEDO_HANDLE(r)));
+    r = OPEN_SOCKET(r);
+    if( r != -1)
+        _osfhnd(r) |= HANDLE_IS_SCK;
+    return r;
 }
 
 int
@@ -670,8 +674,13 @@ win32_socket(int af, int type, int protocol)
 
     if((s = open_ifs_socket(af, type, protocol)) == INVALID_SOCKET)
 	errno = get_last_socket_error();
-    else
+    else {
+        assert(!(SOCKET_FLAG_FROM_HANDLE(s) || IS_PSUEDO_HANDLE(s)));
+        /* _open_osfhandle does a GetFileType which bans handles ending in 01 */
 	s = OPEN_SOCKET(s);
+        if( s != -1)
+            _osfhnd(s) |= HANDLE_IS_SCK;
+    }
 
     return s;
 }
@@ -690,21 +699,28 @@ int my_close(int fd)
 	return(close(fd));	/* Then not a socket. */
     osf = TO_SOCKET(fd);/* Get it now before it's gone! */
     if (osf != -1) {
-	int err;
-	err = closesocket(osf);
-	if (err == 0) {
-	    assert(_osfhnd(fd) == osf); /* catch a bad ioinfo struct def */
-	    /* don't close freed handle */
-	    _set_osfhnd(fd, INVALID_HANDLE_VALUE);
-	    return close(fd);
+	if(SOCKET_FLAG_FROM_HANDLE(osf)) {
+            int err = closesocket(osf);
+            int err2 = closesocket(osf&~HANDLE_IS_SCK);
+            assert(err == err2);  /* ???? */
+            if (err == 0) {
+                assert(_osfhnd(fd) == osf); /* catch a bad ioinfo struct def */
+                /* don't close freed handle */
+                _set_osfhnd(fd, INVALID_HANDLE_VALUE);
+                return close(fd);
+            }
+            else if (err == SOCKET_ERROR) {
+                err = get_last_socket_error();
+                assert(err != ENOTSOCK);
+                /* note this does a not allowed by MS CloseHandle
+                   on the socket handle */
+                (void)close(fd);
+                errno = err;
+                return EOF;
+            }
 	}
-	else if (err == SOCKET_ERROR) {
-	    err = get_last_socket_error();
-	    if (err != ENOTSOCK) {
-		(void)close(fd);
-		errno = err;
-		return EOF;
-	    }
+	else {
+	    assert(!PUBLIC_IS_SOCKET(osf));
 	}
     }
     return close(fd);
@@ -721,21 +737,29 @@ my_fclose (FILE *pf)
     if (osf != -1) {
 	int err;
 	win32_fflush(pf);
-	err = closesocket(osf);
-	if (err == 0) {
-	    assert(_osfhnd(win32_fileno(pf)) == osf); /* catch a bad ioinfo struct def */
-	    /* don't close freed handle */
-	    _set_osfhnd(win32_fileno(pf), INVALID_HANDLE_VALUE);
-	    return fclose(pf);
-	}
-	else if (err == SOCKET_ERROR) {
-	    err = get_last_socket_error();
-	    if (err != ENOTSOCK) {
-		(void)fclose(pf);
-		errno = err;
-		return EOF;
-	    }
-	}
+        if(SOCKET_FLAG_FROM_HANDLE(osf)) {
+            int err = closesocket(osf);
+            int err2 = closesocket(osf&~HANDLE_IS_SCK);
+            assert(err == err2); /* ???? */
+            if (err == 0) {
+                assert(_osfhnd(win32_fileno(pf)) == osf); /* catch a bad ioinfo struct def */
+                /* don't close freed handle */
+                _set_osfhnd(win32_fileno(pf), INVALID_HANDLE_VALUE);
+                return fclose(pf);
+            }
+            else if (err == SOCKET_ERROR) {
+                err = get_last_socket_error();
+                assert(err != ENOTSOCK);
+                /* note this does a not allowed by MS CloseHandle
+                   on the socket handle */
+                (void)fclose(pf);
+                errno = err;
+                return EOF;
+            }
+        }
+        else {
+            assert(!PUBLIC_IS_SOCKET(osf));
+        }
     }
     return fclose(pf);
 }

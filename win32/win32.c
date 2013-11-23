@@ -3332,13 +3332,28 @@ win32_isatty(int fd)
 DllExport int
 win32_dup(int fd)
 {
-    return dup(fd);
+    int ret;
+    int old = _osfhnd(fd);
+    //DebugBreak();
+    ret = dup(fd);
+    if(ret != -1) {
+        int h = _osfhnd(ret);
+        assert(!SOCKET_FLAG_FROM_HANDLE(h));
+        _osfhnd(ret) |= SOCKET_FLAG_FROM_HANDLE(_osfhnd(fd));
+    }
+    return ret;
 }
 
 DllExport int
 win32_dup2(int fd1,int fd2)
 {
-    return dup2(fd1,fd2);
+    int ret = dup2(fd1,fd2);
+    if(ret != -1) {
+        int h = _osfhnd(fd2);
+        assert(!SOCKET_FLAG_FROM_HANDLE(h));
+        _osfhnd(fd2) |= SOCKET_FLAG_FROM_HANDLE(_osfhnd(fd1));
+    }
+    return ret;
 }
 
 DllExport int
