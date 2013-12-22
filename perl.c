@@ -3498,56 +3498,64 @@ S_minus_v(pTHX)
 	    SvREFCNT_dec_NN(level);
 	}
 #if defined(LOCAL_PATCH_COUNT)
-	if (LOCAL_PATCH_COUNT > 0)
-	    PerlIO_printf(PIO_stdout,
-			  "\n(with %d registered patch%s, "
-			  "see perl -V for more detail)",
-			  LOCAL_PATCH_COUNT,
-			  (LOCAL_PATCH_COUNT!=1) ? "es" : "");
+        assert(LOCAL_PATCH_COUNT_CONST == LOCAL_PATCH_COUNT);
 #endif
-
+/* start of Larry Wall copyright printf */
 	PerlIO_printf(PIO_stdout,
-		      "\n\nCopyright 1987-2014, Larry Wall\n");
+#if defined(LOCAL_PATCH_COUNT) && LOCAL_PATCH_COUNT_CONST != 0
+    /* LOCAL_PATCH_COUNT is a C constant, not a preprocessor constant */
+#  if LOCAL_PATCH_COUNT_CONST == 1
+	    "\n(with %d registered patch, see perl -V for more detail)%s"
+#  else
+	    "\n(with %d registered patches, see perl -V for more detail)%s"
+#  endif
+	    ,LOCAL_PATCH_COUNT_CONST,
+#else
+    /* use copyrights for format string */
+#endif
+		      "\n\nCopyright 1987-2014, Larry Wall\n"
 #ifdef MSDOS
-	PerlIO_printf(PIO_stdout,
-		      "\nMS-DOS port Copyright (c) 1989, 1990, Diomidis Spinellis\n");
+		      "\nMS-DOS port Copyright (c) 1989, 1990, Diomidis Spinellis\n"
 #endif
 #ifdef DJGPP
-	PerlIO_printf(PIO_stdout,
 		      "djgpp v2 port (jpl5003c) by Hirofumi Watanabe, 1996\n"
-		      "djgpp v2 port (perl5004+) by Laszlo Molnar, 1997-1999\n");
+		      "djgpp v2 port (perl5004+) by Laszlo Molnar, 1997-1999\n"
 #endif
 #ifdef OS2
-	PerlIO_printf(PIO_stdout,
 		      "\n\nOS/2 port Copyright (c) 1990, 1991, Raymond Chen, Kai Uwe Rommel\n"
-		      "Version 5 port Copyright (c) 1994-2002, Andreas Kaiser, Ilya Zakharevich\n");
+		      "Version 5 port Copyright (c) 1994-2002, Andreas Kaiser, Ilya Zakharevich\n"
 #endif
 #ifdef OEMVS
-	PerlIO_printf(PIO_stdout,
-		      "MVS (OS390) port by Mortice Kern Systems, 1997-1999\n");
+		      "MVS (OS390) port by Mortice Kern Systems, 1997-1999\n"
 #endif
 #ifdef __VOS__
-	PerlIO_printf(PIO_stdout,
-		      "Stratus OpenVOS port by Paul.Green@stratus.com, 1997-2013\n");
+		      "Stratus OpenVOS port by Paul.Green@stratus.com, 1997-2013\n"
 #endif
 #ifdef POSIX_BC
-	PerlIO_printf(PIO_stdout,
-		      "BS2000 (POSIX) port by Start Amadeus GmbH, 1998-1999\n");
+		      "BS2000 (POSIX) port by Start Amadeus GmbH, 1998-1999\n"
 #endif
+#ifdef __SYMBIAN32__
+		      "Symbian port by Nokia, 2004-2005\n"
+#endif
+/* UNDER_CE closes Larry Wall copyright printf */
 #ifdef UNDER_CE
-	PerlIO_printf(PIO_stdout,
 			"WINCE port by Rainer Keuchel, 2001-2002\n"
 			"Built on " __DATE__ " " __TIME__ "\n\n");
 	wce_hitreturn();
-#endif
-#ifdef __SYMBIAN32__
-	PerlIO_printf(PIO_stdout,
-		      "Symbian port by Nokia, 2004-2005\n");
-#endif
+#endif /* end of additional copyright lines */
+
 #ifdef BINARY_BUILD_NOTICE
+#  ifndef UNDER_CE
+	); /* close Larry Wall copyright printf */
+#  endif
+/* ActivePerl uses BINARY_BUILD_NOTICE, it is a statement */
 	BINARY_BUILD_NOTICE;
 #endif
+/* because of wce_hitreturn() open new printf for UNDER_CE */
+#if defined(BINARY_BUILD_NOTICE) || defined(UNDER_CE)
 	PerlIO_printf(PIO_stdout,
+/* else CPP catenation continues from Larry Wall copyright printf */
+#endif
 		      "\n\
 Perl may be copied only under the terms of either the Artistic License or the\n\
 GNU General Public License, which may be found in the Perl 5 source kit.\n\n\

@@ -122,6 +122,7 @@ sub write_files {
     return 0;
 }
 
+my @unpushed_commits;
 my $unpushed_commits = '    ';
 my ($read, $branch, $snapshot_created, $commit_id, $describe)= ("") x 5;
 my ($changed, $extra_info, $commit_title)= ("") x 3;
@@ -155,14 +156,13 @@ elsif (-d "$srcdir/.git") {
     }
 
     if (length $branch && length $remote) {
+        @unpushed_commits = grep {/\+/} backtick("git cherry $remote/$merge");
         # git cherry $remote/$branch | awk 'BEGIN{ORS=","} /\+/ {print $2}' | sed -e 's/,$//'
         my $unpushed_commit_list =
-            join ",", map { (split /\s/, $_)[1] }
-            grep {/\+/} backtick("git cherry $remote/$merge");
+            join ",", map { (split /\s/, $_)[1] } @unpushed_commits;
         # git cherry $remote/$branch | awk 'BEGIN{ORS="\t\\\\\n"} /\+/ {print ",\"" $2 "\""}'
         $unpushed_commits =
-            join "", map { ',"'.(split /\s/, $_)[1]."\"\t\\\n" }
-            grep {/\+/} backtick("git cherry $remote/$merge");
+            join "", map { ',"'.(split /\s/, $_)[1]."\"\t\\\n" } @unpushed_commits;
         if (length $unpushed_commits) {
             $commit_title = "Local Commit:";
             my $ancestor = backtick("git rev-parse $remote/$merge");
@@ -185,6 +185,7 @@ write_files(<<"EOF_HEADER", <<"EOF_CONFIG");
 *          DO NOT EDIT DIRECTLY - edit make_patchnum.pl instead
 ***************************************************************************/
 @{[$describe ? "#define PERL_PATCHNUM \"$describe\"" : ()]}
+#define PERL_GIT_UNPUSHED_COMMITS_LEN ${\scalar(@unpushed_commits)}
 #define PERL_GIT_UNPUSHED_COMMITS\t\t\\
 $unpushed_commits/*leave-this-comment*/
 @{[$changed ? "#define PERL_GIT_UNCOMMITTED_CHANGES" : ()]}

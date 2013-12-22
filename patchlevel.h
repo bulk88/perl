@@ -125,9 +125,11 @@ hunk.
 #  if defined(PERL_IS_MINIPERL)
 #    define PERL_PATCHNUM "UNKNOWN-miniperl"
 #    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
+#    define PERL_GIT_UNPUSHED_COMMITS_LEN 0
 #  elif defined(PERL_MICRO)
 #    define PERL_PATCHNUM "UNKNOWN-microperl"
 #    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
+#    define PERL_GIT_UNPUSHED_COMMITS_LEN 0
 #  else
 #include "git_version.h"
 #  endif
@@ -145,6 +147,14 @@ static const char * const local_patches[] = {
 /* Initial space prevents this variable from being inserted in config.sh  */
 #  define	LOCAL_PATCH_COUNT	\
 	((int)(sizeof(local_patches)/sizeof(local_patches[0])-2))
+
+#ifdef PERL_GIT_UNCOMMITTED_CHANGES
+#  define	LOCAL_PATCH_COUNT_CONST	\
+    (PERL_GIT_UNPUSHED_COMMITS_LEN+1)
+#else
+#  define	LOCAL_PATCH_COUNT_CONST	\
+    (PERL_GIT_UNPUSHED_COMMITS_LEN)
+#endif
 
 /* the old terms of reference, add them only when explicitly included */
 #define PATCHLEVEL		PERL_VERSION
