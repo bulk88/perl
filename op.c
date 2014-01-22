@@ -12531,23 +12531,44 @@ const_av_xsub(pTHX_ CV* cv)
     dVAR;
     dXSARGS;
     AV * const av = MUTABLE_AV(XSANY.any_ptr);
-    SP -= items;
+    U32 gimme_v;
+    assert((SP - items) == MARK);
+    SP = MARK; /* remove all incoming args, more efficient than items */
     assert(av);
 #ifndef DEBUGGING
     if (!av) {
-	XSRETURN(0);
+	goto end;
     }
 #endif
     if (SvRMAGICAL(av))
 	Perl_croak(aTHX_ "Magical list constants are not supported");
-    if (GIMME_V != G_ARRAY) {
-	EXTEND(SP, 1);
-	ST(0) = sv_2mortal(newSViv((IV)AvFILLp(av)+1));
-	XSRETURN(1);
+    gimme_v = GIMME_V;
+    if(gimme_v != G_VOID) {
+	I32 stack_grow = 1;
+	const I32 avlastindex = AvFILLp(av); /* 0 based */
+	I32 avitems; /* 1 based */
+	stack_grow += -(gimme_v == G_ARRAY) & avlastindex; /* branch free */
+	if(gimme_v == G_ARRAY) assert(stack_grow == AvFILLp(av)+1);
+	EXTEND(SP, stack_grow);
+	SP += 1;
+	avitems = avlastindex+1;
+	if(gimme_v != G_ARRAY) {
+	    dXSTARG;
+	    SETs(TARG);
+	    assert(ST(0) == TARG);
+	    sv_setiv(TARG, (IV)avitems);
+	}
+	else {
+	    SV ** const dstsp = SP;
+	    assert(gimme_v == G_ARRAY && &ST(0) == dstsp);
+	    SP += avlastindex;
+	    assert(SP == (PL_stack_base + ax + ((AvFILLp(av)+1) - 1)));
+	    Copy(AvARRAY(av), dstsp, avitems, SV *);
+	}
     }
-    EXTEND(SP, AvFILLp(av)+1);
-    Copy(AvARRAY(av), &ST(0), AvFILLp(av)+1, SV *);
-    XSRETURN(AvFILLp(av)+1);
+    end:
+    PUTBACK;
+    return;
 }
 
 /*
