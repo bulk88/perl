@@ -1228,31 +1228,25 @@ Perl_do_kv(pTHX)
 {
     dVAR;
     dSP;
+    I32 gimme;
     HV * const keys = MUTABLE_HV(POPs);
-    HE *entry;
-    const I32 gimme = GIMME_V;
-    const I32 dokv =     (PL_op->op_type == OP_RV2HV || PL_op->op_type == OP_PADHV);
-    /* op_type is OP_RKEYS/OP_RVALUES if pp_rkeys delegated to here */
-    const I32 dokeys =   dokv || (PL_op->op_type == OP_KEYS || PL_op->op_type == OP_RKEYS);
-    const I32 dovalues = dokv || (PL_op->op_type == OP_VALUES || PL_op->op_type == OP_RVALUES);
-
     (void)hv_iterinit(keys);	/* always reset iterator regardless */
 
+    gimme = GIMME_V;
     if (gimme == G_VOID)
 	RETURN;
 
     if (gimme == G_SCALAR) {
+	SP++; /* part of SETs */
 	if (PL_op->op_flags & OPf_MOD || LVRET) {	/* lvalue */
 	    SV * const ret = sv_2mortal(newSV_type(SVt_PVLV));  /* Not TARG RT#67838 */
 	    sv_magic(ret, NULL, PERL_MAGIC_nkeys, NULL, 0);
 	    LvTYPE(ret) = 'k';
 	    LvTARG(ret) = SvREFCNT_inc_simple(keys);
-	    PUSHs(ret);
+	    SETs(ret);
 	}
 	else {
 	    IV i;
-	    dTARGET;
-
 	    if (! SvTIED_mg((const SV *)keys, PERL_MAGIC_tied) ) {
 		i = HvUSEDKEYS(keys);
 	    }
@@ -1260,34 +1254,61 @@ Perl_do_kv(pTHX)
 		i = 0;
 		while (hv_iternext(keys)) i++;
 	    }
-	    PUSHi( i );
+            {
+                dTARGET;
+                SETs(targ);
+                sv_setiv_mg(targ , i);
+            }
 	}
-	RETURN;
     }
-
-    EXTEND(SP, HvUSEDKEYS(keys) * (dokeys + dovalues));
-
-    PUTBACK;	/* hv_iternext and hv_iterval might clobber stack_sp */
-    while ((entry = hv_iternext(keys))) {
-	SPAGAIN;
-	if (dokeys) {
-	    SV* const sv = hv_iterkeysv(entry);
-	    XPUSHs(sv);	/* won't clobber stack_sp */
+    else {
+/* A = G_ARRAY */
+#define DOKVA_KEYS 0x1
+#define DOKVA_VALUES 0x2
+	HE *entry;
+    /* op_type is OP_RKEYS/OP_RVALUES if pp_rkeys delegated to here */
+	const I32 usedkeys = HvUSEDKEYS(keys);
+	/* do_kind, low nibble is bf, high nibble is extend multiplier,
+	   times 3 on stack extend might cause out of memory error in rare case
+	*/
+	U8 do_kind = (PL_op->op_type == OP_RV2HV || PL_op->op_type == OP_PADHV)
+			    ? 2<<4|DOKVA_KEYS|DOKVA_VALUES
+			    : (PL_op->op_type == OP_KEYS || PL_op->op_type == OP_RKEYS)
+			    ? 1<<4|DOKVA_KEYS
+			    :(PL_op->op_type == OP_VALUES || PL_op->op_type == OP_RVALUES)
+			    ? 1<<4|DOKVA_VALUES : (NOT_REACHED,0);
+	{
+	    const U32 extend_mul = do_kind & 0xf0;
+	    do_kind ^= extend_mul; /* remove extend_mul nibble from bf */
+	    EXTEND(SP, usedkeys * extend_mul);
 	}
-	if (dovalues) {
-	    SV *tmpstr;
-	    PUTBACK;
-	    tmpstr = hv_iterval(keys,entry);
-	    DEBUG_H(Perl_sv_setpvf(aTHX_ tmpstr, "%lu%%%d=%lu",
-			    (unsigned long)HeHASH(entry),
-			    (int)HvMAX(keys)+1,
-			    (unsigned long)(HeHASH(entry) & HvMAX(keys))));
-	    SPAGAIN;
-	    XPUSHs(tmpstr);
+
+	while (entry = hv_iternext(keys)) {
+/* XXX remove or comment the next line out, since this "feature" doesn't exist
+  because do_kind can never be set to 0, because branch 0 is NOT_REACHED, or
+  ASSUME(do_kind) it to neutralize the branch, if the code is found to be
+  needed (DEBUGGING failed), then ASSUME can be removed ???? */
+	    if(do_kind) {
+		EXTEND(SP,2); /* overextend by 1 sometimes won't hurt */
+		if (do_kind & DOKVA_KEYS) {
+		    SV* const sv = hv_iterkeysv(entry);
+		    PUSHs(sv);
+		}
+		if (do_kind & DOKVA_VALUES) {
+		    SV *tmpstr;
+		    tmpstr = hv_iterval(keys,entry);
+		    DEBUG_H(Perl_sv_setpvf(aTHX_ tmpstr, "%lu%%%d=%lu",
+				    (unsigned long)HeHASH(entry),
+				    (int)HvMAX(keys)+1,
+				    (unsigned long)(HeHASH(entry) & HvMAX(keys))));
+		    PUSHs(tmpstr);
+		}
+	    }
 	}
-	PUTBACK;
-    }
-    return NORMAL;
+#undef DOKVA_KEYS
+#undef DOKVA_VALUES
+    } /* else/G_ARRAY */
+    RETURN;
 }
 
 /*
