@@ -12531,9 +12531,8 @@ const_av_xsub(pTHX_ CV* cv)
     dVAR;
     dXSARGS;
     AV * const av = MUTABLE_AV(XSANY.any_ptr);
+    SP = MARK;
     U32 gimme_v;
-    assert((SP - items) == MARK);
-    SP = MARK; /* remove all incoming args, more efficient than items */
     assert(av);
 #ifndef DEBUGGING
     if (!av) {
@@ -12543,17 +12542,12 @@ const_av_xsub(pTHX_ CV* cv)
     if (SvRMAGICAL(av))
 	Perl_croak(aTHX_ "Magical list constants are not supported");
     gimme_v = GIMME_V;
-    if(gimme_v != G_VOID) {
-	I32 stack_grow = 1;
-	const I32 avlastindex = AvFILLp(av); /* 0 based */
-	I32 avitems; /* 1 based */
-	stack_grow += -(gimme_v == G_ARRAY) & avlastindex; /* branch free */
-	if(gimme_v == G_ARRAY) assert(stack_grow == AvFILLp(av)+1);
-	EXTEND(SP, stack_grow);
-	SP += 1;
-	avitems = avlastindex+1;
-	if(gimme_v != G_ARRAY) {
+    if (LIKELY(gimme_v != G_VOID)) {
+	const SSize_t avitems = AvFILLp(av)+1;
+	if (UNLIKELY(gimme_v != G_ARRAY)) {
 	    dXSTARG;
+	    EXTEND(SP, 1);
+	    SP += 1;
 	    SETs(TARG);
 	    assert(ST(0) == TARG);
 	    sv_setiv(TARG, (IV)avitems);
@@ -12561,7 +12555,8 @@ const_av_xsub(pTHX_ CV* cv)
 	else {
 	    SV ** const dstsp = SP;
 	    assert(gimme_v == G_ARRAY && &ST(0) == dstsp);
-	    SP += avlastindex;
+	    EXTEND(SP, avitems)
+	    SP += avitems;
 	    assert(SP == (PL_stack_base + ax + ((AvFILLp(av)+1) - 1)));
 	    Copy(AvARRAY(av), dstsp, avitems, SV *);
 	}
