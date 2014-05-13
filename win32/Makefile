@@ -21,7 +21,7 @@
 # newly built perl.
 #
 INST_DRV	= c:
-INST_TOP	= $(INST_DRV)\perl
+INST_TOP	= $(INST_DRV)\perl521
 
 #
 # Uncomment if you want to build a 32-bit Perl using a 32-bit compiler
@@ -104,9 +104,9 @@ USE_LARGE_FILES	= define
 # uncomment exactly one of the following
 #
 # Visual C++ 6.x (aka Visual C++ 98)
-CCTYPE		= MSVC60
+#CCTYPE		= MSVC60
 # Visual C++ .NET 2002/2003 (aka Visual C++ 7.x) (full version)
-#CCTYPE		= MSVC70
+CCTYPE		= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.x) (free command-line tools)
 #CCTYPE		= MSVC70FREE
 # Windows Server 2003 SP1 Platform SDK (April 2005)
@@ -220,7 +220,7 @@ BUILDOPT	= $(BUILDOPTEXTRA)
 # mode script reading (and break some DATA filehandle functionality)
 # please check first if an updated ByteLoader isn't available on CPAN.
 #
-BUILDOPT	= $(BUILDOPT) -DPERL_TEXTMODE_SCRIPTS
+BUILDOPT	= $(BUILDOPT) -DPERL_TEXTMODE_SCRIPTS -DPERL_HASH_FUNC_ONE_AT_A_TIME
 
 #
 # specify semicolon-separated list of extra directories that modules will
@@ -232,7 +232,7 @@ EXTRALIBDIRS	=
 # set this to your email address (perl will guess a value from
 # from your loginname and your hostname, which may not be right)
 #
-#EMAIL		=
+EMAIL		= bulk88@hotmail.com
 
 ##
 ## Build configuration ends.
@@ -451,7 +451,7 @@ OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
 LINK_DBG	= -debug
 !ELSE
 # -O1 yields smaller code, which turns out to be faster than -O2 on x86 and x64
-OPTIMIZE	= -O1 -MD -Zi -DNDEBUG
+OPTIMIZE	= -O1 -MD -Zi -DNDEBUG -G7
 # we enable debug symbols in release builds also
 LINK_DBG	= -debug -opt:ref,icf
 # you may want to enable this if you want COFF symbols in the executables
