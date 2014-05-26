@@ -284,6 +284,7 @@ double S_Infinity() {
 extern const __declspec(selectany) union { unsigned __int64 __q; double __d; }
 __PL_nan_u = { 0x7FF8000000000000UI64 };
 #  define NV_NAN ((NV)__PL_nan_u.__d)
+#define HAS_ANONFIELDS
 
 #endif /* _MSC_VER */
 
