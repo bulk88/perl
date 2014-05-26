@@ -264,6 +264,8 @@ typedef unsigned short	mode_t;
 #  pragma intrinsic(_rotl64,_rotr64)
 #endif
 
+#define HAS_ANONFIELDS
+
 #endif /* _MSC_VER */
 
 #ifdef __MINGW32__		/* Minimal Gnu-Win32 */
