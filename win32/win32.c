@@ -4389,7 +4389,7 @@ Perl_win32_init(int *argcp, char ***argvp)
      * the standard control classes.  Without this even normal Windows APIs
      * like MessageBox() can fail under some versions of Windows XP.
      */
-    InitCommonControls();
+    //InitCommonControls();
 
     g_osver.dwOSVersionInfoSize = sizeof(g_osver);
     GetVersionEx(&g_osver);
