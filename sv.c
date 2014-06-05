@@ -6441,6 +6441,19 @@ Perl_sv_clear(pTHX_ SV *const orig_sv)
 		    iter_sv = sv;
 		    goto get_next_sv; /* process this new sv */
 		}
+#ifdef PERL_ALT_STACKS
+                if(!AvREAL((const AV *)av) && AvMAX((const AV *)av) == SSize_t_MAX/sizeof(SV*)) {
+                    //fprintf(stderr, "stack dealloc av=%x\n", av);
+                    if(!VirtualFree(
+                        AvALLOC(av),
+                        0,
+                        MEM_RELEASE
+                        )) {
+                        fprintf(stderr, "VF failed %u\n", GetLastError());
+                        exit(1);
+                        }
+                } else
+#endif
 		Safefree(AvALLOC(av));
 	    }
 
@@ -6785,6 +6798,8 @@ Perl_sv_free(pTHX_ SV *const sv)
 /* Private helper function for SvREFCNT_dec().
  * Called with rc set to original SvREFCNT(sv), where rc == 0 or 1 */
 
+SV * watch_sv;
+
 void
 Perl_sv_free2(pTHX_ SV *const sv, const U32 rc)
 {
@@ -6792,6 +6807,9 @@ Perl_sv_free2(pTHX_ SV *const sv, const U32 rc)
 
     PERL_ARGS_ASSERT_SV_FREE2;
 
+    if( sv == watch_sv) {
+        DebugBreak();
+    }
     if (LIKELY( rc == 1 )) {
         /* normal case */
         SvREFCNT(sv) = 0;
@@ -12681,6 +12699,48 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 		    SSize_t items = AvFILLp((const AV *)sstr) + 1;
 
 		    src_ary = AvARRAY((const AV *)sstr);
+#ifdef PERL_ALT_STACKS
+		    if(!AvREAL((const AV *)sstr) && AvMAX((const AV *)sstr) == SSize_t_MAX/sizeof(SV*)) {
+			MEMORY_BASIC_INFORMATION mbi;
+			void * avarr;
+			DWORD_PTR toalloc;
+			void * avarr2;
+			//fprintf(stderr, "stack alloc S_sv_dup_common src av=%x dst av=%x\n", sstr, dstr);
+			if(VirtualQuery(src_ary,&mbi,sizeof(mbi)) != sizeof(mbi)){
+			    DebugBreak();
+			    fprintf(stderr, "VQ failed %u\n", GetLastError());
+			    exit(1);
+			}
+			avarr = VirtualAlloc(
+			    NULL,
+			    33554432, //2^25 32 MB
+			    MEM_RESERVE,
+			    PAGE_NOACCESS
+			);
+			if(!avarr) {
+			    fprintf(stderr, "VA failed %u\n", GetLastError());
+			    exit(1);
+			}
+			if(! (avarr2 = VirtualAlloc(avarr,
+				       mbi.RegionSize,
+				       MEM_COMMIT,
+				       PAGE_READWRITE
+				       ))) {
+			    fprintf(stderr, "VA failed %u\n", GetLastError());
+			    exit(1);
+			}
+			toalloc = (DWORD_PTR) avarr + mbi.RegionSize;
+			if(!VirtualAlloc(toalloc,
+				       4096,
+				       MEM_COMMIT,
+				       PAGE_READWRITE|PAGE_GUARD
+				       )) {
+			    fprintf(stderr, "VA failed %u\n", GetLastError());
+			    exit(1);
+			}
+			dst_ary = avarr;
+		    } else
+#endif
 		    Newxz(dst_ary, AvMAX((const AV *)sstr)+1, SV*);
 		    ptr_table_store(PL_ptr_table, src_ary, dst_ary);
 		    AvARRAY(MUTABLE_AV(dstr)) = dst_ary;
@@ -12693,10 +12753,12 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 			while (items-- > 0)
 			    *dst_ary++ = sv_dup(*src_ary++, param);
 		    }
+                /*is this really needed? This is uninit space I think
 		    items = AvMAX((const AV *)sstr) - AvFILLp((const AV *)sstr);
 		    while (items-- > 0) {
 			*dst_ary++ = &PL_sv_undef;
 		    }
+                */
 		}
 		else {
 		    AvARRAY(MUTABLE_AV(dstr))	= NULL;

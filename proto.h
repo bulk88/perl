@@ -5301,6 +5301,11 @@ PERL_CALLCONV char*	Perl_my_bcopy(const char* from, char* to, I32 len)
 	assert(from); assert(to)
 
 #endif
+#if 0
+#  if defined(PERL_ALT_STACKS)
+PERL_CALLCONV int	Perl_call_runops(pTHX);
+#  endif
+#endif
 #if defined(DEBUGGING)
 PERL_CALLCONV int	Perl_get_debug_opts(pTHX_ const char **s, bool givehelp)
 			__attribute__warn_unused_result__
@@ -5505,6 +5510,9 @@ PERL_CALLCONV MEM_SIZE	Perl_malloced_size(void *p)
 #endif
 #if defined(NO_MATHOMS)
 /* PERL_CALLCONV void	Perl_sv_nounlocking(pTHX_ SV *sv); */
+#endif
+#if defined(PERL_ALT_STACKS)
+PERL_CALLCONV DWORD	Perl_fix_win32stacks(LPEXCEPTION_POINTERS exceptions);
 #endif
 #if defined(PERL_ANY_COW)
 PERL_CALLCONV SV*	Perl_sv_setsv_cow(pTHX_ SV* dstr, SV* sstr)

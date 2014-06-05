@@ -271,33 +271,58 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 =cut
 */
 
-#ifdef STRESS_REALLOC
-# define EXTEND(p,n)   STMT_START {                                     \
+#ifndef PERL_ALT_STACKS
+#  ifdef STRESS_REALLOC
+#    define EXTEND(p,n)   STMT_START {                                  \
                            sp = stack_grow(sp,p,(SSize_t) (n));         \
                            PERL_UNUSED_VAR(sp);                         \
                        } STMT_END
 /* Same thing, but update mark register too. */
-# define MEXTEND(p,n)   STMT_START {                                    \
+#     define MEXTEND(p,n)   STMT_START {                                \
                             const int markoff = mark - PL_stack_base;   \
                             sp = stack_grow(sp,p,(SSize_t) (n));        \
                             mark = PL_stack_base + markoff;             \
                             PERL_UNUSED_VAR(sp);                        \
                         } STMT_END
-#else
-# define EXTEND(p,n)   STMT_START {                                     \
+#  else
+#    define EXTEND(p,n)   STMT_START {                                  \
                          if (UNLIKELY(PL_stack_max - p < (int)(n))) {   \
                            sp = stack_grow(sp,p,(SSize_t) (n));         \
                            PERL_UNUSED_VAR(sp);                         \
                          } } STMT_END
 /* Same thing, but update mark register too. */
-# define MEXTEND(p,n)  STMT_START {                                     \
+#    define MEXTEND(p,n)  STMT_START {                                  \
                          if (UNLIKELY(PL_stack_max - p < (int)(n))) {   \
                            const int markoff = mark - PL_stack_base;    \
                            sp = stack_grow(sp,p,(SSize_t) (n));         \
                            mark = PL_stack_base + markoff;              \
                            PERL_UNUSED_VAR(sp);                         \
                          } } STMT_END
-#endif
+#  endif /* STRESS_REALLOC */
+#  define REXTEND(p,n) EXTEND(p,n)
+#  define RMEXTEND(p,n) MEXTEND(p,n)
+#else
+#  ifdef STRESS_REALLOC
+#    error STRESS_REALLOC and PERL_ALT_STACKS not implemented
+#  else
+#    define EXTEND(p,n)   NOOP
+#    define MEXTEND(p,n)  NOOP
+#    define REXTEND(p,n)   STMT_START {                                 \
+                         if (UNLIKELY(PL_stack_max - p < (int)(n))) {   \
+                           sp = stack_grow(sp,p,(SSize_t) (n));         \
+                           PERL_UNUSED_VAR(sp);                         \
+                         } } STMT_END
+
+/* Same thing, but update mark register too. */
+#    define RMEXTEND(p,n)  STMT_START {                                 \
+                         if (UNLIKELY(PL_stack_max - p < (int)(n))) {   \
+                           const int markoff = mark - PL_stack_base;    \
+                           sp = stack_grow(sp,p,(SSize_t) (n));         \
+                           mark = PL_stack_base + markoff;              \
+                           PERL_UNUSED_VAR(sp);                         \
+                         } } STMT_END
+#  endif /* STRESS_REALLOC */
+#endif /* PERL_ALT_STACKS */
 
 #define PUSHs(s)	(*++sp = (s))
 #define PUSHTARG	STMT_START { SvSETMAGIC(TARG); PUSHs(TARG); } STMT_END
@@ -307,6 +332,7 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define PUSHu(u)	STMT_START { sv_setuv(TARG, (UV)(u)); PUSHTARG; } STMT_END
 
 #define XPUSHs(s)	STMT_START { EXTEND(sp,1); *++sp = (s); } STMT_END
+#define RXPUSHs(s)	STMT_START { REXTEND(sp,1); *++sp = (s); } STMT_END
 #define XPUSHTARG	STMT_START { SvSETMAGIC(TARG); XPUSHs(TARG); } STMT_END
 #define XPUSHp(p,l)	STMT_START { sv_setpvn(TARG, (p), (l)); XPUSHTARG; } STMT_END
 #define XPUSHn(n)	STMT_START { sv_setnv(TARG, (NV)(n)); XPUSHTARG; } STMT_END

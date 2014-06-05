@@ -233,6 +233,9 @@ RunPerl(int argc, char **argv, char **env)
 
     PERL_SYS_INIT(&argc,&argv);
 
+#ifdef PERL_ALT_STACKS
+__try {
+#endif
     if (!(my_perl = perl_alloc()))
 	return (1);
     perl_construct(my_perl);
@@ -277,6 +280,16 @@ RunPerl(int argc, char **argv, char **env)
     PERL_SYS_TERM();
 
     return (exitstatus);
+
+#ifdef PERL_ALT_STACKS
+}
+    __except(GetExceptionCode() == STATUS_GUARD_PAGE_VIOLATION
+             ? Perl_fix_win32stacks(GetExceptionInformation())
+             : EXCEPTION_CONTINUE_SEARCH) {
+        NOOP;
+    }
+croak_no_mem();
+#endif
 }
 
 EXTERN_C void

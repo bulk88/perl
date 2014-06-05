@@ -92,6 +92,9 @@ main(int argc, char **argv, char **env)
     PERL_SYS_INIT3(&argc,&argv,&env);
 #endif
 
+#ifdef PERL_ALT_STACKS
+__try {
+#endif
 #if defined(USE_ITHREADS)
     /* XXX Ideally, this should really be happening in perl_alloc() or
      * perl_construct() to keep libperl.a transparently fork()-safe.
@@ -163,6 +166,16 @@ main(int argc, char **argv, char **env)
 
     exit(exitstatus);
     return exitstatus;
+#ifdef PERL_ALT_STACKS
+}
+    __except(GetExceptionCode() == STATUS_GUARD_PAGE_VIOLATION
+             ? Perl_fix_win32stacks(GetExceptionInformation())
+             : EXCEPTION_CONTINUE_SEARCH) {
+        NOOP;
+    }
+croak_no_mem();
+#endif
+
 }
 
 /* Register any extra external extensions */

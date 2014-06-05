@@ -1,3 +1,6 @@
+!IF "$(USE_ALT_STACKS)" == "define"
+BUILDOPT	= $(BUILDOPT) -DPERL_ALT_STACKS
+!ENDIF
 #
 # Makefile to build perl on Windows using Microsoft NMAKE.
 # Supported compilers:
@@ -22,6 +25,10 @@
 #
 INST_DRV	= c:
 INST_TOP	= $(INST_DRV)\perl521
+
+# Use OS specific Virtual Memory APIs to speed up Perl stack manipulation
+
+USE_ALT_STACKS	= define
 
 #
 # Uncomment if you want to build a 32-bit Perl using a 32-bit compiler
@@ -304,6 +311,10 @@ BUILDOPT	= $(BUILDOPT) -DPERL_IMPLICIT_CONTEXT
 
 !IF "$(USE_IMP_SYS)" != "undef"
 BUILDOPT	= $(BUILDOPT) -DPERL_IMPLICIT_SYS
+!ENDIF
+
+!IF "$(USE_ALT_STACKS)" == "define"
+BUILDOPT	= $(BUILDOPT) -DPERL_ALT_STACKS
 !ENDIF
 
 !IF "$(PROCESSOR_ARCHITECTURE)" == ""
@@ -992,10 +1003,18 @@ $(MINIDIR) :
 	if not exist "$(MINIDIR)" mkdir "$(MINIDIR)"
 
 $(MINICORE_OBJ) : $(CORE_NOCFG_H)
+!IF "$(USE_ALT_STACKS)" == "define"
+	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL -DPERL_ALT_STACKS $(OBJOUT_FLAG)$@ ..\$(*F).c
+!ELSE
 	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ ..\$(*F).c
+!ENDIF
 
 $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
+!IF "$(USE_ALT_STACKS)" == "define"
+	$(CC) -c $(CFLAGS) -DPERL_IS_MINIPERL -DPERL_ALT_STACKS $(OBJOUT_FLAG)$@ $(*F).c
+!ELSE
 	$(CC) -c $(CFLAGS) -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $(*F).c
+!ENDIF
 
 # -DPERL_IMPLICIT_SYS needs C++ for perllib.c
 # This is the only file that depends on perlhost.h, vmem.h, and vdir.h

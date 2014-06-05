@@ -4560,6 +4560,52 @@ win32_create_message_window(void)
                         0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 }
 
+#ifdef PERL_ALT_STACKS
+DWORD
+Perl_fix_win32stacks(LPEXCEPTION_POINTERS exceptions)
+{
+    dTHX;
+    MEMORY_BASIC_INFORMATION mbi;
+    DWORD_PTR newalloc;
+    assert(exceptions->ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION
+          && exceptions->ExceptionRecord->ExceptionFlags == 0);
+//needs bounds checks to make sure the STATUS_GUARD_PAGE_VIOLATION is for Perl stack and not some other c lib doing the same thing
+    /* ExceptionAddress is EIP/ * to machine code where fault happened, its not
+      interesting */
+    /* ExceptionFlags has to be zero, or the exception is not resumable, so there
+      is no point in checking it */
+    if(exceptions->ExceptionRecord->NumberParameters == 2
+       && (exceptions->ExceptionRecord->ExceptionInformation[0] == 0 /* read fault */
+       || exceptions->ExceptionRecord->ExceptionInformation[0] == 1) /* write failt */
+       && exceptions->ExceptionRecord->ExceptionInformation[1] >= (ULONG_PTR)PL_stack_base && /* fault addr >= stack bottom */
+//should this catch something beyond the alloc or let it pass through, and catch how far beyond the alloc?
+       exceptions->ExceptionRecord->ExceptionInformation[1] <= (ULONG_PTR)PL_stack_base + STACKMAX) {
+    //this is inefficient, these things should be stored somewhere in interp struct
+    if(VirtualQuery(PL_stack_base,&mbi,sizeof(mbi)) != sizeof(mbi)){
+        DebugBreak();
+        fprintf(stderr, "VQ failed %u\n", GetLastError());
+        exit(1);
+    }
+    assert(PL_stack_base == PL_stack_base && PL_stack_base == AvARRAY(PL_curstack));
+    newalloc = (DWORD_PTR)mbi.AllocationBase+(DWORD_PTR)mbi.RegionSize;
+    if(!VirtualAlloc(newalloc,
+                   PERL_PAGESIZE,
+                   MEM_COMMIT,
+                   PAGE_READWRITE|PAGE_GUARD
+                   )) {
+        DebugBreak();
+        fprintf(stderr, "VA failed %u\n", GetLastError());
+        exit(1);
+    }
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    else { /* fault address and exception isn't from Perl */
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+}
+#endif
+
 #ifdef HAVE_INTERP_INTERN
 
 static void

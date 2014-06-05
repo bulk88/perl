@@ -202,6 +202,13 @@
 #define MEMBER_TO_FPTR(name) name
 #endif /* !PERL_CORE */
 
+//put call to func that has __try/__catch, then calls PL_runops here?
+//#ifdef PERL_ALT_STACKS
+//#  define CALLRUNOPS(x) Perl_call_runops(x)
+//#else
+//#  define CALLRUNOPS  PL_runops
+//#endif
+
 #define CALLRUNOPS  PL_runops
 
 #define CALLREGCOMP(sv, flags) Perl_pregcomp(aTHX_ (sv),(flags))
@@ -4583,6 +4590,9 @@ EXTCONST char PL_bincompat_options[] =
 #  endif
 #  ifdef PERLIO_LAYERS
 			     " PERLIO_LAYERS"
+#  endif
+#  ifdef PERL_ALT_STACKS
+			     " PERL_ALT_STACKS"
 #  endif
 #  ifdef PERL_DEBUG_READONLY_COW
 			     " PERL_DEBUG_READONLY_COW"

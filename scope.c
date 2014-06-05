@@ -56,7 +56,55 @@ Perl_new_stackinfo(pTHX_ I32 stitems, I32 cxitems)
     Newx(si, 1, PERL_SI);
     si->si_stack = newAV();
     AvREAL_off(si->si_stack);
+#ifndef PERL_ALT_STACKS
     av_extend(si->si_stack, stitems > 0 ? stitems-1 : 0);
+#else
+    {
+    void *avarr;
+    void * avarr2;
+    void * toalloc;
+    Safefree(AvALLOC(si->si_stack));
+    AvALLOC(si->si_stack) = NULL;
+    AvARRAY(si->si_stack) = NULL;
+    AvMAX(si->si_stack) = SSize_t_MAX/sizeof(SV*);
+    //fprintf(stderr, "stack alloc NSI av=%x\n", si->si_stack);
+    avarr = VirtualAlloc(
+        NULL,
+        STACKMAX,
+        MEM_RESERVE,
+        PAGE_NOACCESS
+    );
+    if(!avarr) {
+        DWORD e = GetLastError();
+        DebugBreak();
+        fprintf(stderr, "VA failed %u\n", GetLastError());
+        exit(1);
+    }
+    //4096 (page size) should be constant or runtime lookup from Win32 API, for
+    //4096 on 32 and x64, 8K on ia64 http://blogs.msdn.com/b/oldnewthing/archive/2004/09/08/226797.aspx
+    if(! (avarr2 = VirtualAlloc(avarr,
+                   PERL_PAGESIZE,
+                   MEM_COMMIT,
+                   PAGE_READWRITE
+                   ))) {
+        DebugBreak();
+        fprintf(stderr, "VA failed %u\n", GetLastError());
+        exit(1);
+    }
+    (DWORD_PTR)toalloc = (DWORD_PTR)avarr+PERL_PAGESIZE;
+    if(!VirtualAlloc(toalloc,
+                   PERL_PAGESIZE,
+                   MEM_COMMIT,
+                   PAGE_READWRITE|PAGE_GUARD
+                   )) {
+        DebugBreak();
+        fprintf(stderr, "VA failed %u\n", GetLastError());
+        exit(1);
+    }
+    AvALLOC(si->si_stack) = (SV**)avarr;
+    AvARRAY(si->si_stack) = (SV**)avarr;
+    }
+#endif
     AvALLOC(si->si_stack)[0] = &PL_sv_undef;
     AvFILLp(si->si_stack) = 0;
     si->si_prev = 0;

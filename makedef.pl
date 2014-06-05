@@ -533,6 +533,12 @@ if ($define{HAS_SIGNBIT}) {
     ++$skip{Perl_signbit};
 }
 
+unless ($define{PERL_ALT_STACKS}) {
+    ++$skip{Perl_call_runops};
+    ++$skip{Perl_fix_win32stacks};
+}
+++$skip{Perl_call_runops}; #obsolete
+
 if ($define{'PERL_GLOBAL_STRUCT'}) {
     readvar('perlvars.h', \%skip);
     # This seems like the least ugly way to cope with the fact that PL_sh_path

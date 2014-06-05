@@ -468,6 +468,9 @@ STATIC void *
 S_ithread_run(void * arg)
 #endif
 {
+#ifdef PERL_ALT_STACKS
+__try {
+#endif
     ithread *thread = (ithread *)arg;
     int jmp_rc = 0;
     I32 oldscope;
@@ -637,6 +640,16 @@ S_ithread_run(void * arg)
 #else
     return (0);
 #endif
+#ifdef PERL_ALT_STACKS
+}
+    __except(GetExceptionCode() == STATUS_GUARD_PAGE_VIOLATION
+             ? Perl_fix_win32stacks(GetExceptionInformation())
+             : EXCEPTION_CONTINUE_SEARCH) {
+        NOOP;
+    }
+Perl_croak_no_mem();
+#endif
+
 }
 
 

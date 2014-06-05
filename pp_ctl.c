@@ -1002,8 +1002,14 @@ PP(pp_mapwhile)
 	    dst = (SP += shift);
 	    PL_markstack_ptr[-1] += shift;
 	    *PL_markstack_ptr += shift;
-	    while (count--)
-		*dst-- = *src--;
+            //copy upwards not downwards
+            if(count) {
+                SV** dst1 = dst;
+                SV** src1 = src;
+                dst1 -= (count-1);
+                src1 -= (count-1);
+                memcpy(dst1, src1, sizeof(SV**)*count);
+            }
 	}
 	/* copy the new items down to the destination list */
 	dst = PL_stack_base + (PL_markstack_ptr[-2] += items) - 1;

@@ -48,6 +48,24 @@ Perl_runops_standard(pTHX)
     return 0;
 }
 
+#if 0
+#ifdef PERL_ALT_STACKS
+int
+Perl_call_runops(pTHX)
+{
+    __try {
+        return PL_runops(aTHX);
+    }
+    __except(GetExceptionCode() == STATUS_GUARD_PAGE_VIOLATION
+             ? Perl_fix_win32stacks(GetExceptionInformation())
+             : EXCEPTION_CONTINUE_SEARCH) {
+        NOOP;
+    }
+    croak_no_mem();
+}
+#endif
+#endif
+
 /*
  * Local variables:
  * c-indentation-style: bsd

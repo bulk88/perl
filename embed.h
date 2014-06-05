@@ -1346,6 +1346,11 @@
 #  if !defined(WIN32)
 #define do_exec3(a,b,c)		Perl_do_exec3(aTHX_ a,b,c)
 #  endif
+#  if 0
+#    if defined(PERL_ALT_STACKS)
+#define call_runops()		Perl_call_runops(aTHX)
+#    endif
+#  endif
 #  if defined(DEBUGGING)
 #define get_debug_opts(a,b)	Perl_get_debug_opts(aTHX_ a,b)
 #    if defined(PERL_IN_PAD_C)
@@ -1376,6 +1381,9 @@
 #  if defined(MYMALLOC)
 #define malloc_good_size	Perl_malloc_good_size
 #define malloced_size		Perl_malloced_size
+#  endif
+#  if defined(PERL_ALT_STACKS)
+#define fix_win32stacks		Perl_fix_win32stacks
 #  endif
 #  if defined(PERL_CORE)
 #define opslab_force_free(a)	Perl_opslab_force_free(aTHX_ a)

@@ -225,6 +225,26 @@ struct utsname {
 #  define WNOHANG	1
 #endif
 
+#ifndef PERL_PAGESIZE
+#  if defined(PAGE_SIZE)
+#    define PERL_PAGESIZE PAGE_SIZE
+#  elif defined(_M_IA64) || defined(__IA64__)
+/* http://blogs.msdn.com/b/oldnewthing/archive/2004/09/08/226797.aspx */
+#    define PERL_PAGESIZE 8192
+#  elif defined(_M_IX86) || defined(_M_X64) || defined (__i386__) || defined(__x86_64__)
+#    define PERL_PAGESIZE 4096
+#  else
+#    error Unknown page size (ARM ?)
+#  endif
+#endif
+
+#ifdef PERL_ALT_STACKS
+#  define STACKMAX 0x1F00000
+#  define PERL_ALT_STACKS_EXPR(x) x
+#else
+#  define PERL_ALT_STACKS_EXPR(x)
+#endif
+
 #define PERL_GET_CONTEXT_DEFINED
 
 /* Compiler-specific stuff. */

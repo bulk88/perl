@@ -273,7 +273,7 @@ Aprd	|void	|vcroak		|NULLOK const char* pat|NULLOK va_list* args
 Anprd	|void	|croak_no_modify
 Anprd	|void	|croak_xs_usage	|NN const CV *const cv \
 				|NN const char *const params
-npr	|void	|croak_no_mem
+nprX	|void	|croak_no_mem
 nprX	|void	|croak_popstack
 #if defined(WIN32)
 norx	|void	|win32_croak_not_implemented|NN const char * fname
@@ -1696,6 +1696,12 @@ Asrnx	|void	|croak_memory_wrap
 Ap	|struct perl_vars *|GetVars
 Ap	|struct perl_vars*|init_global_struct
 Ap	|void	|free_global_struct|NN struct perl_vars *plvarsp
+#endif
+#if defined(PERL_ALT_STACKS)
+#if 0
+pX	|int	|call_runops|
+#endif
+pnX	|DWORD	|fix_win32stacks|LPEXCEPTION_POINTERS exceptions
 #endif
 Ap	|int	|runops_standard
 Ap	|int	|runops_debug

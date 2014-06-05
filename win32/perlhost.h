@@ -1691,6 +1691,9 @@ PerlProcGetTimeOfDay(struct IPerlProc* piPerl, struct timeval *t, void *z)
 static THREAD_RET_TYPE
 win32_start_child(LPVOID arg)
 {
+#ifdef PERL_ALT_STACKS
+__try {
+#endif
     PerlInterpreter *my_perl = (PerlInterpreter*)arg;
     int status;
     HWND parent_message_hwnd;
@@ -1801,6 +1804,16 @@ restart:
 #else
     return (DWORD)status;
 #endif
+#ifdef PERL_ALT_STACKS
+}
+    __except(GetExceptionCode() == STATUS_GUARD_PAGE_VIOLATION
+             ? Perl_fix_win32stacks(GetExceptionInformation())
+             : EXCEPTION_CONTINUE_SEARCH) {
+        NOOP;
+    }
+croak_no_mem();
+#endif
+
 }
 #endif /* USE_ITHREADS */
 

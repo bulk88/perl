@@ -5612,7 +5612,7 @@ PP(pp_split)
 	    } else {
 		dstr = newSVpvn_flags(s, m-s,
 				      (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-		XPUSHs(dstr);
+		RXPUSHs(dstr);
 	    }
 
 	    /* skip the whitespace found last */
@@ -5653,7 +5653,7 @@ PP(pp_split)
 	    } else {
 		dstr = newSVpvn_flags(s, m-s,
 				      (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-		XPUSHs(dstr);
+		RXPUSHs(dstr);
 	    }
 	    s = m;
 	}
@@ -5670,9 +5670,9 @@ PP(pp_split)
 	if (!gimme_scalar) {
 	    const U32 items = limit - 1;
 	    if (items < slen)
-		EXTEND(SP, items);
+		REXTEND(SP, items);
 	    else
-		EXTEND(SP, slen);
+		REXTEND(SP, slen);
 	}
 
         if (do_utf8) {
@@ -5740,7 +5740,7 @@ PP(pp_split)
 		} else {
 		    dstr = newSVpvn_flags(s, m-s,
 					 (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-		    XPUSHs(dstr);
+		    RXPUSHs(dstr);
 		}
 		/* The rx->minlen is in characters but we want to step
 		 * s ahead by bytes. */
@@ -5764,7 +5764,7 @@ PP(pp_split)
 		} else {
 		    dstr = newSVpvn_flags(s, m-s,
 					 (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-		    XPUSHs(dstr);
+		    RXPUSHs(dstr);
 		}
 		/* The rx->minlen is in characters but we want to step
 		 * s ahead by bytes. */
@@ -5801,7 +5801,7 @@ PP(pp_split)
 	    } else {
 		dstr = newSVpvn_flags(s, m-s,
 				      (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-		XPUSHs(dstr);
+		RXPUSHs(dstr);
 	    }
 	    if (RX_NPARENS(rx)) {
 		I32 i;
@@ -5826,7 +5826,7 @@ PP(pp_split)
 			}
 			else
 			    dstr = &PL_sv_undef;  /* undef, not "" */
-			XPUSHs(dstr);
+			RXPUSHs(dstr);
 		    }
 
 		}
@@ -5846,7 +5846,7 @@ PP(pp_split)
 	if (!gimme_scalar) {
 	    const STRLEN l = strend - s;
 	    dstr = newSVpvn_flags(s, l, (do_utf8 ? SVf_UTF8 : 0) | make_mortal);
-	    XPUSHs(dstr);
+	    RXPUSHs(dstr);
 	}
 	iters++;
     }
