@@ -2416,12 +2416,14 @@ int
 CPerlHost::Chdir(const char *dirname)
 {
     int ret;
+    int eno;
     if (!dirname) {
-	errno = ENOENT;
-	return -1;
+        ret = -1;
+        goto no_entry;
     }
     ret = m_pvDir->SetCurrentDirectoryA((char*)dirname);
     if(ret < 0) {
+        no_entry:
 	errno = ENOENT;
     }
     return ret;

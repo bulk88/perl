@@ -599,6 +599,7 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
     int status;
     int flag = P_WAIT;
     int index = 0;
+    int eno;
 
     PERL_ARGS_ASSERT_DO_ASPAWN;
 
@@ -625,7 +626,7 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
 			   (const char*)(really ? SvPV_nolen(really) : argv[0]),
 			   (const char* const*)argv);
 
-    if (status < 0 && (errno == ENOEXEC || errno == ENOENT)) {
+    if (status < 0 && ((eno = errno),(eno == ENOEXEC || eno == ENOENT))) {
 	/* possible shell-builtin, invoke with shell */
 	int sh_items;
 	sh_items = w32_perlshell_items;
@@ -816,15 +817,16 @@ win32_opendir(const char *filename)
     WIN32_FIND_DATAW	wFindData;
     char		buffer[MAX_PATH*2];
     BOOL		use_default;
+    int 		ret_eno;
 
     len = strlen(filename);
     if (len == 0) {
-	errno = ENOENT;
-	return NULL;
+	ret_eno = ENOENT;
+	goto ret_w_errno;
     }
     if (len > MAX_PATH) {
-	errno = ENAMETOOLONG;
-	return NULL;
+	ret_eno = ENAMETOOLONG;
+	goto ret_w_errno;
     }
 
     /* Get us a DIR structure */
@@ -852,22 +854,23 @@ win32_opendir(const char *filename)
     if (dirp->handle == INVALID_HANDLE_VALUE) {
 	DWORD err = GetLastError();
 	/* FindFirstFile() fails on empty drives! */
-	switch (err) {
-	case ERROR_FILE_NOT_FOUND:
+	if(err == ERROR_FILE_NOT_FOUND){
 	    return dirp;
-	case ERROR_NO_MORE_FILES:
-	case ERROR_PATH_NOT_FOUND:
-	    errno = ENOENT;
-	    break;
-	case ERROR_NOT_ENOUGH_MEMORY:
-	    errno = ENOMEM;
-	    break;
-	default:
-	    errno = EINVAL;
-	    break;
 	}
 	Safefree(dirp);
-	return NULL;
+	switch (err) {
+	case ERROR_NO_MORE_FILES:
+	case ERROR_PATH_NOT_FOUND:
+	    ret_eno = ENOENT;
+	    break;
+	case ERROR_NOT_ENOUGH_MEMORY:
+	    ret_eno = ENOMEM;
+	    break;
+	default:
+	    ret_eno = EINVAL;
+	    break;
+	}
+	goto ret_w_errno;
     }
 
     use_default = FALSE;
@@ -894,6 +897,10 @@ win32_opendir(const char *filename)
     dirp->end = dirp->curr = dirp->start;
     dirp->end += idx;
     return dirp;
+
+    ret_w_errno:
+    errno = ret_eno;
+    return NULL;
 }
 
 
@@ -1438,6 +1445,7 @@ win32_stat(const char *path, Stat_t *sbuf)
     int		l = strlen(path);
     dTHX;
     int		res;
+    int		fail_eno;
     int         nlink = 1;
     BOOL        expect_dir = FALSE;
 
@@ -1452,8 +1460,8 @@ win32_stat(const char *path, Stat_t *sbuf)
 	case '\\':
         case '/':
 	    if (l > sizeof(buffer)) {
-		errno = ENAMETOOLONG;
-		return -1;
+                fail_eno = ENAMETOOLONG;
+                goto fail_with_error;
 	    }
             --l;
             strncpy(buffer, path, l);
@@ -1528,13 +1536,13 @@ win32_stat(const char *path, Stat_t *sbuf)
 	{
 	    /* The drive can be inaccessible, some _stat()s are buggy */
 	    if (!GetVolumeInformationA(path,NULL,0,NULL,NULL,NULL,NULL,0)) {
-		errno = ENOENT;
-		return -1;
+                fail_eno = ENOENT;
+                goto fail_with_error;
 	    }
 	}
         if (expect_dir && !S_ISDIR(sbuf->st_mode)) {
-            errno = ENOTDIR;
-            return -1;
+            fail_eno = ENOTDIR;
+            goto fail_with_error;
         }
 	if (S_ISDIR(sbuf->st_mode)) {
 	    /* Ensure the "write" bit is switched off in the mode for
@@ -1550,6 +1558,10 @@ win32_stat(const char *path, Stat_t *sbuf)
 	}
     }
     return res;
+
+    fail_with_error:
+    errno = fail_eno;
+    return -1;
 }
 
 #define isSLASH(c) ((c) == '/' || (c) == '\\')
@@ -1631,14 +1643,14 @@ win32_longpath(char *path)
 	fhand = FindFirstFile(path,&fdata);
 	*start = sep;
 	if (fhand != INVALID_HANDLE_VALUE) {
-	    STRLEN len = strlen(fdata.cFileName);
+	    STRLEN len;
+	    FindClose(fhand);
+	    len = strlen(fdata.cFileName);
 	    if ((STRLEN)(tmpbuf + sizeof(tmpbuf) - tmpstart) > len) {
 		strcpy(tmpstart, fdata.cFileName);
 		tmpstart += len;
-		FindClose(fhand);
 	    }
 	    else {
-		FindClose(fhand);
 		errno = ERANGE;
 		return NULL;
 	    }
@@ -2326,7 +2338,7 @@ win32_internal_wait(pTHX_ int *status, DWORD timeout)
 	}
     }
 
-    errno = GetLastError();
+    errno = GetLastError(); /* is this correct ? */
     return -1;
 }
 
@@ -2475,11 +2487,12 @@ win32_flock(int fd, int oper)
 {
     OVERLAPPED o;
     int i = -1;
+    int eno;
     HANDLE fh;
 
     fh = (HANDLE)_get_osfhandle(fd);
     if (fh == (HANDLE)-1)  /* _get_osfhandle() already sets errno to EBADF */
-        return -1;
+        return i;
 
     memset(&o, 0, sizeof(o));
 
@@ -2506,14 +2519,17 @@ win32_flock(int fd, int oper)
             i = 0;
 	break;
     default:			/* unknown */
-	errno = EINVAL;
-	return -1;
+	assert(i == -1);
+	eno = EINVAL;
+	goto fail;
     }
     if (i == -1) {
         if (GetLastError() == ERROR_LOCK_VIOLATION)
-            errno = EWOULDBLOCK;
+            eno = EWOULDBLOCK;
         else
-            errno = EINVAL;
+            eno = EINVAL;
+        fail:
+        errno = eno;
     }
     return i;
 }

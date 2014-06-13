@@ -1225,6 +1225,7 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define SETERRNO(errcode,vmserrcode) (errno = (errcode))
 #endif
 
+/* saved_errno, is used in other parts of interp, careful if you rename it */
 #ifndef dSAVEDERRNO
 #   define dSAVEDERRNO    int saved_errno
 #   define dSAVE_ERRNO    int saved_errno = errno

@@ -993,7 +993,6 @@ Perl_nextargv(pTHX_ GV *gv)
 	} /* successful do_open_raw(), PL_inplace non-NULL */
 
         if (ckWARN_d(WARN_INPLACE)) {
-            const int eno = errno;
             if (PerlLIO_stat(PL_oldname, &PL_statbuf) >= 0
                 && !S_ISREG(PL_statbuf.st_mode)) {
                 Perl_warner(aTHX_ packWARN(WARN_INPLACE),
@@ -1001,6 +1000,7 @@ Perl_nextargv(pTHX_ GV *gv)
                             PL_oldname);
             }
             else {
+                const int eno = errno;
                 Perl_warner(aTHX_ packWARN(WARN_INPLACE), "Can't open %s: %s",
                             PL_oldname, Strerror(eno));
             }

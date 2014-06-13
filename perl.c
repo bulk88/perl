@@ -3750,12 +3750,13 @@ S_open_script(pTHX_ const char *scriptname, bool dosearch, bool *suidscript)
 #endif
     }
     if (!rsfp) {
+        const char * const error_str = Strerror(errno);
 	/* PSz 16 Sep 03  Keep neat error message */
 	if (PL_e_script)
-	    Perl_croak(aTHX_ "Can't open "BIT_BUCKET": %s\n", Strerror(errno));
+	    Perl_croak(aTHX_ "Can't open "BIT_BUCKET": %s\n", error_str);
 	else
 	    Perl_croak(aTHX_ "Can't open perl script \"%s\": %s\n",
-		    CopFILE(PL_curcop), Strerror(errno));
+		    CopFILE(PL_curcop), error_str);
     }
     fd = PerlIO_fileno(rsfp);
 #if defined(HAS_FCNTL) && defined(F_SETFD)
@@ -4982,8 +4983,9 @@ Perl_my_failure_exit(pTHX)
 
 #else
     int exitstatus;
-    if (errno & 255)
-	STATUS_UNIX_SET(errno);
+    int eno = errno;
+    if (eno & 255)
+	STATUS_UNIX_SET(eno);
     else {
 	exitstatus = STATUS_UNIX >> 8;
 	if (exitstatus & 255)

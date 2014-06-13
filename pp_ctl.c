@@ -4032,13 +4032,15 @@ PP(pp_require)
 			}
 			break;
 		    }
-                    else if (errno == EMFILE || errno == EACCES) {
+		    else {
+			saved_errno = errno;
+			if (saved_errno == EMFILE || saved_errno == EACCES)
                         /* no point in trying other paths if out of handles;
                          * on the other hand, if we couldn't open one of the
                          * files, then going on with the search could lead to
                          * unexpected results; see perl #113422
                          */
-                        break;
+			    goto break_loop_with_errno;
                     }
 		  }
 		}
@@ -4046,6 +4048,7 @@ PP(pp_require)
 	}
     }
     saved_errno = errno; /* sv_2mortal can realloc things */
+    break_loop_with_errno:
     sv_2mortal(namesv);
     if (!tryrsfp) {
 	if (PL_op->op_type == OP_REQUIRE) {
