@@ -2285,6 +2285,7 @@ Evaluates I<sv> more than once.  Sets I<len> to 0 if C<SvOOK(sv)> is false.
     } STMT_END
 #else
     /* This is the same code, but avoids using any temporary variables:  */
+/* use the macro that says whether we do unaligned reads or not instead of copy */
 #  define SvOOK_offset(sv, offset) STMT_START {				\
 	assert(sizeof(offset) == sizeof(STRLEN));			\
 	if (SvOOK(sv)) {						\

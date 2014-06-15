@@ -370,6 +370,7 @@ Perl_rxres_save(pTHX_ void **rsp, REGEXP *rx)
 	*rsp = (void*)p;
     }
 
+/* investigate memcpy plus lockign struct members into an order, unrolled copy loops here*/
     /* what (if anything) to free on croak */
     *p++ = PTR2UV(RX_MATCH_COPIED(rx) ? RX_SUBBEG(rx) : NULL);
     RX_MATCH_COPIED_off(rx);

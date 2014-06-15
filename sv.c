@@ -8697,6 +8697,7 @@ if necessary.  Handles operator overloading.  Skips handling 'get' magic.
 void
 Perl_sv_dec_nomg(pTHX_ SV *const sv)
 {
+    /*todo this func has a ton of extra sv_backoff calls, factor them into 1 */
     dVAR;
     int flags;
 

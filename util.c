@@ -1080,6 +1080,7 @@ Perl_savepvn(pTHX_ const char *pv, I32 len)
 
     assert(len >= 0);
 
+/* use calloc in case its new pages from the OS */
     Newx(newaddr,len+1,char);
     /* Give a meaning to NULL pointer mainly for the use in sv_magic() */
     if (pv) {
