@@ -826,24 +826,37 @@ Perl_sv_free_arenas(pTHX)
 
 =cut
 
+WARNING: Every aspect of the internals of SV bodies has repeatedly changed
+over the course of Perl's history. This section describes the current
+implementation, not past implementations. Historically this section often
+became out of sync with the code that deals with SV bodys. The source code is
+authoritative, not this document.
+
 Allocation of SV-bodies is similar to SV-heads, differing as follows;
 the allocation mechanism is used for many body types, so is somewhat
 more complicated, it uses arena-sets, and has no need for still-live
 SV detection.
 
 At the outermost level, (new|del)_X*V macros return bodies of the
-appropriate type.  These macros call either (new|del)_body_type or
-(new|del)_body_allocated macro pairs, depending on specifics of the
-type.  Most body types use the former pair, the latter pair is used to
-allocate body types with "ghost fields".
+appropriate type.  The C<new_*> macros call either C<S_new_body> or use
+C<new_body_inline> directly based on performance considerations.
+In both cases, C<S_new_body> implictly and for C<new_body_inline> explictly
+the body pointer is backed up based on whether the type has "ghost fields"
+and size of all of them. To delete a body, if it is allocated in the first
+place, C<del_body> is called. PURIFY builds do something else that this
+paragraph didn't cover.
 
 "ghost fields" are fields that are unused in certain types, and
 consequently don't need to actually exist.  They are declared because
-they're part of a "base type", which allows use of functions as
-methods.  The simplest examples are AVs and HVs, 2 aggregate types
-which don't use the fields which support SCALAR semantics.
+they're part of a "base type", which allows use the same macros, and therefore
+internally the same C/assembly code struct offset to be used to read the stuct
+member regardless of low or high (or simple or fancy) the particular body type
+is.  For an example, lets look at IVs, RVs (a type of IV now) and PVs. These
+3 types aren't blessed, or magical, so they do not use, and therefore do not
+need the fields which support (and implement) blessed (an HV * that represent
+the class) and magic (the MG *) semantics.
 
-For these types, the arenas are carved up into appropriately sized
+For types with ghost fields, the arenas are carved up into appropriately sized
 chunks, we thus avoid wasted memory for those unaccessed members.
 When bodies are allocated, we adjust the pointer back in memory by the
 size of the part not allocated, so it's as if we allocated the full
@@ -851,6 +864,8 @@ structure.  (But things will all go boom if you write to the part that
 is "not there", because you'll be overwriting the last members of the
 preceding structure in memory.)
 
+A long time ago in Perl's history, every body struct type had the NV as
+the first member, now the HV * that indicated a blessed object is first.
 We calculate the correction using the STRUCT_OFFSET macro on the first
 member present.  If the allocated structure is smaller (no initial NV
 actually allocated) then the net effect is to subtract the size of the NV
@@ -862,16 +877,17 @@ optimised accesses based on the alignment constraint of the actual pointer
 to the full structure, for example, using a single 64 bit load instruction
 because it "knows" that two adjacent 32 bit members will be 8-byte aligned.)
 
-This is the same trick as was used for NV and IV bodies.  Ironically it
-doesn't need to be used for NV bodies any more, because NV is now at
-the start of the structure.  IV bodies, and also in some builds NV bodies,
-don't need it either, because they are no longer allocated.
+This is the same trick as was used for NV and IV bodies. Over time, more types
+got ghost fields through subsequent refactorings. Also eventually, IV
+(and RVs which are implemented as IVs) lost their arena-ed and allocated bodies
+completly. A 4th member was added to the SV head. This 4th member has multiple
+uses now based on type, but for IVs, RVs, and also in some builds NV bodies,
+the body pointer is a corrected value to the 4th member of the head. No arena,
+no malloc.
 
-In turn, the new_body_* allocators call S_new_body(), which invokes
-new_body_inline macro, which takes a lock, and takes a body off the
-linked list at PL_body_roots[sv_type], calling Perl_more_bodies() if
-necessary to refresh an empty list.  Then the lock is released, and
-the body is returned.
+S_new_body(), which invokes new_body_inline macro. The new_body_inline macro
+takes a body off the linked list at PL_body_roots[sv_type], calling Perl_more_bodies() if
+necessary to refresh an empty list, and then the body is returned.
 
 Perl_more_bodies allocates a new arena, and carves it up into an array of N
 bodies, which it strings into a linked list.  It looks up arena-size
@@ -879,7 +895,8 @@ and body-size from the body_details table described below, thus
 supporting the multiple body-types.
 
 If PURIFY is defined, or PERL_ARENA_SIZE=0, arenas are not used, and
-the (new|del)_X*V macros are mapped directly to malloc/free.
+the (new|del)_X*V macros are mapped directly to malloc/free.  Macro
+new_body_inline is never called on a PURIFY build.
 
 For each sv-type, struct body_details bodies_by_type[] carries
 parameters which control these aspects of SV handling:
@@ -1049,10 +1066,6 @@ static const struct body_details bodies_by_type[] = {
       FIT_ARENA(24, sizeof(XPVIO)) },
 };
 
-#define new_body_allocated(sv_type)		\
-    (void *)((char *)S_new_body(aTHX_ sv_type)	\
-	     - bodies_by_type[sv_type].offset)
-
 /* return a thing to the free list */
 
 #define del_body(thing, root)				\
@@ -1064,7 +1077,7 @@ static const struct body_details bodies_by_type[] = {
 
 #ifdef PURIFY
 #if !(NVSIZE <= IVSIZE)
-#  define new_XNV()	safemalloc(sizeof(XPVNV))
+#  define new_XNV(x)	((x) = safemalloc(sizeof(XPVNV)))
 #endif
 #define new_XPVNV()	safemalloc(sizeof(XPVNV))
 #define new_XPVMG()	safemalloc(sizeof(XPVMG))
@@ -1072,12 +1085,20 @@ static const struct body_details bodies_by_type[] = {
 #define del_XPVGV(p)	safefree(p)
 
 #else /* !PURIFY */
-
+/* this is the only of the 3 new_* macros to be used in sv_upgrade which is hot
+   so use inline macro version */
 #if !(NVSIZE <= IVSIZE)
-#  define new_XNV()	new_body_allocated(SVt_NV)
+#  ifdef DEBUGGING
+#    define new_XNV(x) x = 	S_new_body(aTHX_ SVt_NV)
+#  else
+#    define new_XNV(x)							\
+    STMT_START { new_body_inline(x, SVt_NV);				\
+	x = (void *)((char *)x - bodies_by_type[SVt_NV].offset);	\
+    } STMT_END
+#  endif
 #endif
-#define new_XPVNV()	new_body_allocated(SVt_PVNV)
-#define new_XPVMG()	new_body_allocated(SVt_PVMG)
+#define new_XPVNV()	S_new_body(aTHX_ SVt_PVNV)
+#define new_XPVMG()	S_new_body(aTHX_ SVt_PVMG)
 
 #define del_XPVGV(p)	del_body(p + bodies_by_type[SVt_PVGV].offset,	\
 				 &PL_body_roots[SVt_PVGV])
@@ -1188,6 +1209,10 @@ Perl_more_bodies (pTHX_ const svtype sv_type, const size_t body_size,
    The inline version is used for speed in hot routines, and the
    function using it serves the rest (unless PURIFY).
 */
+
+#ifndef PURIFY
+
+#ifndef DEBUGGING
 #define new_body_inline(xpv, sv_type) \
     STMT_START { \
 	void ** const r3wt = &PL_body_roots[sv_type]; \
@@ -1197,14 +1222,27 @@ Perl_more_bodies (pTHX_ const svtype sv_type, const size_t body_size,
 					     bodies_by_type[sv_type].arena_size)); \
 	*(r3wt) = *(void**)(xpv); \
     } STMT_END
-
-#ifndef PURIFY
+#else
+#define new_body_inline(xpv, sv_type) S_new_body_inline(aTHX_ &(xpv), sv_type)
+void
+S_new_body_inline(pTHX_ void ** xpvp, const svtype sv_type) {
+	void * xpv;
+	void ** const r3wt = &PL_body_roots[sv_type];
+	xpv = (PTR_TBL_ENT_t*) (*((void **)(r3wt))
+	  ? *((void **)(r3wt)) : Perl_more_bodies(aTHX_ sv_type,
+					     bodies_by_type[sv_type].body_size,
+					     bodies_by_type[sv_type].arena_size));
+	*(r3wt) = *(void**)(xpv);
+        *xpvp = xpv;
+    }
+#endif
 
 STATIC void *
 S_new_body(pTHX_ const svtype sv_type)
 {
     void *xpv;
     new_body_inline(xpv, sv_type);
+    xpv = (void *)((char *)xpv - bodies_by_type[sv_type].offset);
     return xpv;
 }
 
@@ -1343,8 +1381,7 @@ Perl_sv_upgrade(pTHX_ SV *const sv, svtype new_type)
 
     new_type_details = bodies_by_type + new_type;
 
-    SvFLAGS(sv) &= ~SVTYPEMASK;
-    SvFLAGS(sv) |= new_type;
+    SvTYPE_set_mem(sv, new_type);
 
     /* This can't happen, as SVt_NULL is <= all values of new_type, so one of
        the return statements above will have triggered.  */
@@ -1360,7 +1397,7 @@ Perl_sv_upgrade(pTHX_ SV *const sv, svtype new_type)
 #if NVSIZE <= IVSIZE
 	SET_SVANY_FOR_BODYLESS_NV(sv);
 #else
-	SvANY(sv) = new_XNV();
+	new_XNV(SvANY(sv));
 #endif
 	SvNV_set(sv, 0);
 	return;
@@ -1441,10 +1478,14 @@ Perl_sv_upgrade(pTHX_ SV *const sv, svtype new_type)
 	/* We always allocated the full length item with PURIFY. To do this
 	   we fake things so that arena is false for all 16 types..  */
 	if(new_type_details->arena) {
+#ifndef PURIFY
 	    /* This points to the start of the allocated area.  */
 	    new_body_inline(new_body, new_type);
 	    Zero(new_body, new_type_details->body_size, char);
 	    new_body = ((char *)new_body) - new_type_details->offset;
+#else
+	    assert(0);
+#endif
 	} else {
 	    new_body = new_NOARENAZ(new_type_details);
 	}
@@ -13478,7 +13519,7 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 #if NVSIZE <= IVSIZE
 	SET_SVANY_FOR_BODYLESS_NV(dstr);
 #else
-	SvANY(dstr)	= new_XNV();
+	new_XNV(SvANY(dstr));
 #endif
 	SvNV_set(dstr, SvNVX(sstr));
 	break;
@@ -13510,9 +13551,13 @@ S_sv_dup_common(pTHX_ const SV *const sstr, CLONE_PARAMS *const param)
 	    case SVt_PV:
 		assert(sv_type_details->body_size);
 		if (sv_type_details->arena) {
+#ifndef PURIFY
 		    new_body_inline(new_body, sv_type);
 		    new_body
 			= (void*)((char*)new_body - sv_type_details->offset);
+#else
+		    assert(0);
+#endif
 		} else {
 		    new_body = new_NOARENA(sv_type_details);
 		}
@@ -15219,6 +15264,27 @@ Perl_clone_params_new(PerlInterpreter *const from, PerlInterpreter *const to)
 void
 Perl_init_constants(pTHX)
 {
+#ifdef DEBUGGING /* sanity check for U32PBYTE0 and SvTYPE_set_mem */
+{   U32 assert_low = SVTYPEMASK;	U32 assert_hi = 0xFF000000;
+    struct STRUCT_SV sv_head;
+    SV * sv = &sv_head;
+    PERL_UNUSED_ARG(assert_low);	PERL_UNUSED_ARG(assert_hi);
+    assert(SVTYPEMASK == 0xff
+           && *U32PBYTE0(&assert_low) == SVTYPEMASK
+           && (*U32PBYTE0(&assert_low))         + (*U32PBYTE1(&assert_low) << 8)
+              + (*U32PBYTE2(&assert_low) << 16) + (*U32PBYTE3(&assert_low) << 24)
+                == SVTYPEMASK
+            && *U32PBYTE3(&assert_hi) == 0xFF
+            && (*U32PBYTE0(&assert_hi))         + (*U32PBYTE1(&assert_hi) << 8)
+                + (*U32PBYTE2(&assert_hi) << 16)+ (*U32PBYTE3(&assert_hi) << 24)
+                == 0xFF000000
+            );
+    sv->sv_flags = SVt_IV;
+    SvTYPE_set_mem(sv, SVt_NV);
+    assert(SvTYPE(sv) ==  SVt_NV);
+}
+#endif
+
     SvREFCNT(&PL_sv_undef)	= SvREFCNT_IMMORTAL;
     SvFLAGS(&PL_sv_undef)	= SVf_READONLY|SVf_PROTECT|SVt_NULL;
     SvANY(&PL_sv_undef)		= NULL;
