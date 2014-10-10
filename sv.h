@@ -401,6 +401,14 @@ perform the upgrade if necessary.  See C<svtype>.
 
 #define SVTYPEMASK	0xff
 #define SvTYPE(sv)	((svtype)((sv)->sv_flags & SVTYPEMASK))
+/* it is suggested for C compiler optimization reasons to only use this macro
+   if there are no other SV flags using/referencing statements are near
+   by in the code. This macro directly sets the memory in the SV head, and
+   avoids keeping the entire U32 sv flags in a temporary variable or register.
+   If you are modifying or testing the flags part of sv_flags member near by,
+   it is suggested to not use this macro and instead use traditional U32
+   arithmitic for optimization reasons */
+#define SvTYPE_set_mem(sv, type) (*U32PBYTE0(&SvFLAGS((sv))) = (type))
 
 /* Sadly there are some parts of the core that have pointers to already-freed
    SV heads, and rely on being able to tell that they are now free. So mark

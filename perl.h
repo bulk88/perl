@@ -3891,6 +3891,12 @@ my_swap16(const U16 x) {
 #  define vtohs(x)      ((x)&0xFFFF)
 #  define htovl(x)      vtohl(x)
 #  define htovs(x)      vtohs(x)
+/* U32PBYTE*(x) is a macro that splits a U32 * into mutable U8 *s which go from
+   LSB (byte 0) to MSB (byte 3), these macros account for platform endianess */
+#  define U32PBYTE0(x) ((U8*)((Size_t)(x)+0))
+#  define U32PBYTE1(x) ((U8*)((Size_t)(x)+1))
+#  define U32PBYTE2(x) ((U8*)((Size_t)(x)+2))
+#  define U32PBYTE3(x) ((U8*)((Size_t)(x)+3))
 #elif BYTEORDER == 0x4321 || BYTEORDER == 0x87654321
 #  define vtohl(x)	((((x)&0xFF)<<24)	\
 			+(((x)>>24)&0xFF)	\
@@ -3899,6 +3905,10 @@ my_swap16(const U16 x) {
 #  define vtohs(x)	((((x)&0xFF)<<8) + (((x)>>8)&0xFF))
 #  define htovl(x)	vtohl(x)
 #  define htovs(x)	vtohs(x)
+#  define U32PBYTE0(x) ((U8*)((Size_t)(x)+3))
+#  define U32PBYTE1(x) ((U8*)((Size_t)(x)+2))
+#  define U32PBYTE2(x) ((U8*)((Size_t)(x)+1))
+#  define U32PBYTE3(x) ((U8*)((Size_t)(x)+0))
 #else
 #  error "Unsupported byteorder"
 /* If you have need for current perl on PDP-11 or similar, and can help test
