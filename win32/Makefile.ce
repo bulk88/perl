@@ -24,8 +24,8 @@ WCEROOT    = D:\Windows CE Tools
 HPERL = $(MAKEDIR)\..\miniperl.exe
 
 CEPATH     = D:\Programme\Microsoft eMbedded Tools\EVC\WCE211\BIN
-CELIBDLLDIR  = h:\src\wince\celib-palm-3.0
-CECONSOLEDIR = h:\src\wince\w32console
+CELIBDLLDIR  = C:\sources\celib-palm-3.0
+CECONSOLEDIR = C:\sources\w32console
 
 # specify following options to build perl on local machine, by MSVC
 MSVCDIR         = D:\MSVStudio\VC98
@@ -821,6 +821,7 @@ $(CONFIGPM) : $(HPERL) ..\config.sh config_h.PL ..\git_version.h
 
 .\config.h: $(CONFIGPM) ..\config.sh
 	-@$(DEL) /f config.h
+#copy $(CFGH_TMPL) config.h
 	-$(HPERL) -I..\lib config_h.PL "INST_VER=$(INST_VER)" "CORE_DIR=$(COREDIR)" "CONFIG_H=config.h"
 	copy config.h ..\config.h
 

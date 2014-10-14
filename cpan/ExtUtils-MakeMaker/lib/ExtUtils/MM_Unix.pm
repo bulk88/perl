@@ -1597,22 +1597,20 @@ sub init_main {
     # Some systems have restrictions on files names for DLL's etc.
     # mod2fname returns appropriate file base name (typically truncated)
     # It may also edit @modparts if required.
-    # We require DynaLoader to make sure that mod2fname is loaded
-    eval { require DynaLoader };
-    if (defined &DynaLoader::mod2fname) {
-        $modfname = &DynaLoader::mod2fname(\@modparts);
-    }
-
-    ($self->{PARENT_NAME}, $self->{BASEEXT}) = $self->{NAME} =~ m!(?:([\w:]+)::)?(\w+)\z! ;
-    $self->{PARENT_NAME} ||= '';
-
+    # The PP version requires loading DynaLoader.pm, otherwise it is implemented
+    # in XS and always available without DynaLoader.pm (VMS, OS2)
+    
+    eval { require DynaLoader } if $Config::Config{d_libname_unique};
     if (defined &DynaLoader::mod2fname) {
 	# As of 5.001m, dl_os2 appends '_'
+	$modfname = &DynaLoader::mod2fname(\@modparts);
 	$self->{DLBASE} = $modfname;
     } else {
 	$self->{DLBASE} = '$(BASEEXT)';
     }
 
+    ($self->{PARENT_NAME}, $self->{BASEEXT}) = $self->{NAME} =~ m!(?:([\w:]+)::)?(\w+)\z! ;
+    $self->{PARENT_NAME} ||= '';
 
     # --- Initialize PERL_LIB, PERL_SRC
 

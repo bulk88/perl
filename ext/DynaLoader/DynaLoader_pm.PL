@@ -86,6 +86,9 @@ package DynaLoader;
 
 BEGIN {
     $VERSION = '1.27';
+    use Carp;
+    Carp::cluck();
+    exit;
 }
 
 use Config;
