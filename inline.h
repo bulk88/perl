@@ -342,6 +342,20 @@ get_regex_charset_name(const U32 flags, STRLEN* const lenp)
     return "?";	    /* Unknown */
 }
 
+__forceinline char *
+S_sv_2pv_flags(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
+{
+    __int64 _2pv_int = Perl_sv_2pv_flags_s(aTHX_ sv, flags);
+    if(lp)
+        *lp = _2pv_int >> 32;
+    return (char*)(U32)_2pv_int;
+    //_2pv_t _2pv = *(_2pv_t *)&_2pv_int;
+    //if(lp)
+    //    *lp = _2pv.len;
+    //return _2pv.pv;
+}
+
+
 /*
  * Local variables:
  * c-indentation-style: bsd
