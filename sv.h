@@ -1711,6 +1711,11 @@ Like sv_utf8_upgrade, but doesn't do magic on C<sv>.
 
 /* ----*/
 
+typedef struct {
+    char * pv; /* EAX */
+    STRLEN len; /* EDX */
+} _2pv_t;
+
 #define SvPV(sv, lp)         SvPV_flags(sv, lp, SV_GMAGIC)
 #define SvPV_const(sv, lp)   SvPV_flags_const(sv, lp, SV_GMAGIC)
 #define SvPV_mutable(sv, lp) SvPV_flags_mutable(sv, lp, SV_GMAGIC)
