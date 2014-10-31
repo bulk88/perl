@@ -8,7 +8,7 @@ use vars qw($VERSION @ISA @EXPORT);
 
 @ISA = qw(Exporter);
 @EXPORT = qw(writemain);
-$VERSION = '1.03';
+$VERSION = '1.04';
 
 # blead will run this with miniperl, hence we can't use autodie or File::Temp
 my $temp;
@@ -115,6 +115,7 @@ main(int argc, char **argv, char **env)
     /* noop unless Configure is given -Accflags=-DPERL_GPROF_CONTROL */
     PERL_GPROF_MONCONTROL(0);
 
+    _set_error_mode(_OUT_TO_MSGBOX);
 #ifdef NO_ENV_ARRAY_IN_MAIN
     PERL_SYS_INIT3(&argc,&argv,&environ);
 #else
