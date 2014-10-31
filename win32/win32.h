@@ -24,6 +24,7 @@
 /* less I/O calls during each require */
 #  define PERL_DISABLE_PMC
 #endif
+#define PERL_DISABLE_PMC
 
 #ifdef WIN32_NO_SOCKETS
 #  undef HAS_SOCKET

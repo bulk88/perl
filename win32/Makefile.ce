@@ -24,8 +24,8 @@ WCEROOT    = D:\Windows CE Tools
 HPERL = $(MAKEDIR)\..\miniperl.exe
 
 CEPATH     = D:\Programme\Microsoft eMbedded Tools\EVC\WCE211\BIN
-CELIBDLLDIR  = h:\src\wince\celib-palm-3.0
-CECONSOLEDIR = h:\src\wince\w32console
+CELIBDLLDIR  = C:\sources\celib-palm-3.0
+CECONSOLEDIR = C:\sources\w32console
 
 # specify following options to build perl on local machine, by MSVC
 MSVCDIR         = D:\MSVStudio\VC98
@@ -71,7 +71,7 @@ CCTYPE		= MSVC60
 CFG=RELEASE
 
 !if "$(MACHINE)" == ""
-MACHINE=wince-arm-hpc-wce300
+#MACHINE=wince-arm-hpc-wce300
 #MACHINE=wince-arm-hpc-wce211
 #MACHINE=wince-sh3-hpc-wce211
 #MACHINE=wince-mips-hpc-wce211
@@ -85,7 +85,7 @@ MACHINE=wince-arm-hpc-wce300
 #MACHINE=wince-sh3-palm-wce211
 #MACHINE=wince-x86em-palm-wce211
 #MACHINE=wince-x86-hpc-wce300
-#MACHINE=wince-arm-pocket-wce400
+MACHINE=wince-arm-pocket-wce400
 !endif
 
 # set this to your email address
