@@ -922,52 +922,51 @@ struct IPerlMemInfo
 struct IPerlProc;
 struct IPerlProcInfo;
 typedef void		(*LPProcAbort)(struct IPerlProc*);
-typedef char*		(*LPProcCrypt)(struct IPerlProc*, const char*,
-			    const char*);
-typedef void		(*LPProcExit)(struct IPerlProc*, int)
+typedef char*		(*LPProcCrypt)(const char*,
+			    const char*, struct IPerlProc*);
+typedef void		(*LPProcExit)(int, struct IPerlProc*)
 			    __attribute__noreturn__;
-typedef void		(*LPProc_Exit)(struct IPerlProc*, int)
+typedef void		(*LPProc_Exit)(int, struct IPerlProc*)
 			    __attribute__noreturn__;
-typedef int		(*LPProcExecl)(struct IPerlProc*, const char*,
+typedef int		(*LPProcExecl)(const char*,
 			    const char*, const char*, const char*,
-			    const char*);
-typedef int		(*LPProcExecv)(struct IPerlProc*, const char*,
-			    const char*const*);
-typedef int		(*LPProcExecvp)(struct IPerlProc*, const char*,
-			    const char*const*);
+			    const char*, struct IPerlProc*);
+typedef int		(*LPProcExecv)(const char*,
+			    const char*const*, struct IPerlProc*);
+typedef int		(*LPProcExecvp)(const char*,
+			    const char*const*, struct IPerlProc*);
 typedef Uid_t		(*LPProcGetuid)(struct IPerlProc*);
 typedef Uid_t		(*LPProcGeteuid)(struct IPerlProc*);
 typedef Gid_t		(*LPProcGetgid)(struct IPerlProc*);
 typedef Gid_t		(*LPProcGetegid)(struct IPerlProc*);
 typedef char*		(*LPProcGetlogin)(struct IPerlProc*);
-typedef int		(*LPProcKill)(struct IPerlProc*, int, int);
+typedef int		(*LPProcKill)(int, int, struct IPerlProc*);
 typedef int		(*LPProcKillpg)(struct IPerlProc*, int, int);
 typedef int		(*LPProcPauseProc)(struct IPerlProc*);
 typedef PerlIO*		(*LPProcPopen)(struct IPerlProc*, const char*,
 			    const char*);
 typedef PerlIO*		(*LPProcPopenList)(struct IPerlProc*, const char*,
 			    IV narg, SV **args);
-typedef int		(*LPProcPclose)(struct IPerlProc*, PerlIO*);
+typedef int		(*LPProcPclose)(PerlIO*, struct IPerlProc*);
 typedef int		(*LPProcPipe)(struct IPerlProc*, int*);
 typedef int		(*LPProcSetuid)(struct IPerlProc*, uid_t);
 typedef int		(*LPProcSetgid)(struct IPerlProc*, gid_t);
-typedef int		(*LPProcSleep)(struct IPerlProc*, unsigned int);
-typedef int		(*LPProcTimes)(struct IPerlProc*, struct tms*);
-typedef int		(*LPProcWait)(struct IPerlProc*, int*);
-typedef int		(*LPProcWaitpid)(struct IPerlProc*, int, int*, int);
-typedef Sighandler_t	(*LPProcSignal)(struct IPerlProc*, int, Sighandler_t);
+typedef int		(*LPProcSleep)(unsigned int, struct IPerlProc*);
+typedef int		(*LPProcTimes)(struct tms*, struct IPerlProc*);
+typedef int		(*LPProcWait)(int*, struct IPerlProc*);
+typedef int		(*LPProcWaitpid)(int, int*, int, struct IPerlProc*);
+typedef Sighandler_t	(*LPProcSignal)(int, Sighandler_t, struct IPerlProc*);
 typedef int		(*LPProcFork)(struct IPerlProc*);
 typedef int		(*LPProcGetpid)(struct IPerlProc*);
 #ifdef WIN32
-typedef void*		(*LPProcDynaLoader)(struct IPerlProc*, const char*);
-typedef void		(*LPProcGetOSError)(struct IPerlProc*,
-			    SV* sv, DWORD dwErr);
-typedef int		(*LPProcSpawnvp)(struct IPerlProc*, int, const char*,
-			    const char*const*);
+typedef void*		(*LPProcDynaLoader)(const char*, struct IPerlProc*);
+typedef void		(*LPProcGetOSError)(SV* sv, DWORD dwErr, struct IPerlProc*);
+typedef int		(*LPProcSpawnvp)(int, const char*,
+			    const char*const*, struct IPerlProc*);
 #endif
 typedef int		(*LPProcLastHost)(struct IPerlProc*);
-typedef int		(*LPProcGetTimeOfDay)(struct IPerlProc*,
-					      struct timeval*, void*);
+typedef int		(*LPProcGetTimeOfDay)(struct timeval*, void*,
+					      struct IPerlProc*);
 
 struct IPerlProc
 {
@@ -1017,17 +1016,17 @@ struct IPerlProcInfo
 #define PerlProc_abort()						\
 	(*PL_Proc->pAbort)(PL_Proc)
 #define PerlProc_crypt(c,s)						\
-	(*PL_Proc->pCrypt)(PL_Proc, (c), (s))
+	(*PL_Proc->pCrypt)((c), (s), PL_Proc)
 #define PerlProc_exit(s)						\
-	(*PL_Proc->pExit)(PL_Proc, (s))
+	(*PL_Proc->pExit)((s), PL_Proc)
 #define PerlProc__exit(s)						\
-	(*PL_Proc->p_Exit)(PL_Proc, (s))
+	(*PL_Proc->p_Exit)((s), PL_Proc)
 #define PerlProc_execl(c, w, x, y, z)					\
-	(*PL_Proc->pExecl)(PL_Proc, (c), (w), (x), (y), (z))
+	(*PL_Proc->pExecl)((c), (w), (x), (y), (z), PL_Proc)
 #define PerlProc_execv(c, a)						\
-	(*PL_Proc->pExecv)(PL_Proc, (c), (a))
+	(*PL_Proc->pExecv)((c), (a), PL_Proc)
 #define PerlProc_execvp(c, a)						\
-	(*PL_Proc->pExecvp)(PL_Proc, (c), (a))
+	(*PL_Proc->pExecvp)((c), (a), PL_Proc)
 #define PerlProc_getuid()						\
 	(*PL_Proc->pGetuid)(PL_Proc)
 #define PerlProc_geteuid()						\
@@ -1039,7 +1038,7 @@ struct IPerlProcInfo
 #define PerlProc_getlogin()						\
 	(*PL_Proc->pGetlogin)(PL_Proc)
 #define PerlProc_kill(i, a)						\
-	(*PL_Proc->pKill)(PL_Proc, (i), (a))
+	(*PL_Proc->pKill)((i), (a), PL_Proc)
 #define PerlProc_killpg(i, a)						\
 	(*PL_Proc->pKillpg)(PL_Proc, (i), (a))
 #define PerlProc_pause()						\
@@ -1049,7 +1048,7 @@ struct IPerlProcInfo
 #define PerlProc_popen_list(m, n, a)					\
 	(*PL_Proc->pPopenList)(PL_Proc, (m), (n), (a))
 #define PerlProc_pclose(f)						\
-	(*PL_Proc->pPclose)(PL_Proc, (f))
+	(*PL_Proc->pPclose)((f), PL_Proc)
 #define PerlProc_pipe(fd)						\
 	(*PL_Proc->pPipe)(PL_Proc, (fd))
 #define PerlProc_setuid(u)						\
@@ -1057,15 +1056,15 @@ struct IPerlProcInfo
 #define PerlProc_setgid(g)						\
 	(*PL_Proc->pSetgid)(PL_Proc, (g))
 #define PerlProc_sleep(t)						\
-	(*PL_Proc->pSleep)(PL_Proc, (t))
+	(*PL_Proc->pSleep)((t), PL_Proc)
 #define PerlProc_times(t)						\
-	(*PL_Proc->pTimes)(PL_Proc, (t))
+	(*PL_Proc->pTimes)((t), PL_Proc)
 #define PerlProc_wait(t)						\
-	(*PL_Proc->pWait)(PL_Proc, (t))
+	(*PL_Proc->pWait)((t), PL_Proc)
 #define PerlProc_waitpid(p,s,f)						\
-	(*PL_Proc->pWaitpid)(PL_Proc, (p), (s), (f))
+	(*PL_Proc->pWaitpid)((p), (s), (f), PL_Proc)
 #define PerlProc_signal(n, h)						\
-	(*PL_Proc->pSignal)(PL_Proc, (n), (h))
+	(*PL_Proc->pSignal)((n), (h), PL_Proc)
 #define PerlProc_fork()							\
 	(*PL_Proc->pFork)(PL_Proc)
 #define PerlProc_getpid()						\
@@ -1075,16 +1074,16 @@ struct IPerlProcInfo
 
 #ifdef WIN32
 #define PerlProc_DynaLoad(f)						\
-	(*PL_Proc->pDynaLoader)(PL_Proc, (f))
+	(*PL_Proc->pDynaLoader)((f),PL_Proc)
 #define PerlProc_GetOSError(s,e)					\
-	(*PL_Proc->pGetOSError)(PL_Proc, (s), (e))
+	(*PL_Proc->pGetOSError)((s), (e), PL_Proc)
 #define PerlProc_spawnvp(m, c, a)					\
-	(*PL_Proc->pSpawnvp)(PL_Proc, (m), (c), (a))
+	(*PL_Proc->pSpawnvp)((m), (c), (a), PL_Proc)
 #endif
 #define PerlProc_lasthost()						\
 	(*PL_Proc->pLastHost)(PL_Proc)
 #define PerlProc_gettimeofday(t,z)					\
-	(*PL_Proc->pGetTimeOfDay)(PL_Proc,(t),(z))
+	(*PL_Proc->pGetTimeOfDay)((t),(z), PL_Proc)
 
 #else	/* PERL_IMPLICIT_SYS */
 
