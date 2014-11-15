@@ -1521,6 +1521,7 @@ struct IPerlSock perlSock =
 #define EXECF_EXEC 1
 #define EXECF_SPAWN 2
 
+/*
 void
 PerlProcAbort(struct IPerlProc* piPerl)
 {
@@ -1528,40 +1529,65 @@ PerlProcAbort(struct IPerlProc* piPerl)
 }
 
 char *
-PerlProcCrypt(struct IPerlProc* piPerl, const char* clear, const char* salt)
+PerlProcCrypt(const char* clear, const char* salt, struct IPerlProc* piPerl)
 {
     return win32_crypt(clear, salt);
 }
+*/
 
-PERL_CALLCONV_NO_RET void
-PerlProcExit(struct IPerlProc* piPerl, int status)
+void
+win32_exit(int status)
 {
     exit(status);
 }
 
-PERL_CALLCONV_NO_RET void
-PerlProc_Exit(struct IPerlProc* piPerl, int status)
+void
+win32__exit(int status)
 {
     _exit(status);
 }
 
 int
-PerlProcExecl(struct IPerlProc* piPerl, const char *cmdname, const char *arg0, const char *arg1, const char *arg2, const char *arg3)
+win32_execl(const char *cmdname, const char *arg0, const char *arg1, const char *arg2, const char *arg3)
+{
+    return execl(cmdname, arg0, arg1, arg2, arg3);
+}
+
+
+/* the struct IPerlProc* piPerl param may discourage a less than perfect
+   C optimizer from optimizing the function to a single "jmp" instruction */
+/*
+PERL_CALLCONV_NO_RET void
+PerlProcExit(int status, struct IPerlProc* piPerl)
+{
+    exit(status);
+}
+
+PERL_CALLCONV_NO_RET void
+PerlProc_Exit(int status, struct IPerlProc* piPerl)
+{
+    _exit(status);
+}
+
+
+int
+PerlProcExecl(const char *cmdname, const char *arg0, const char *arg1, const char *arg2, const char *arg3, struct IPerlProc* piPerl)
 {
     return execl(cmdname, arg0, arg1, arg2, arg3);
 }
 
 int
-PerlProcExecv(struct IPerlProc* piPerl, const char *cmdname, const char *const *argv)
+PerlProcExecv(const char *cmdname, const char *const *argv, struct IPerlProc* piPerl)
 {
     return win32_execvp(cmdname, argv);
 }
 
 int
-PerlProcExecvp(struct IPerlProc* piPerl, const char *cmdname, const char *const *argv)
+PerlProcExecvp(const char *cmdname, const char *const *argv, struct IPerlProc* piPerl)
 {
     return win32_execvp(cmdname, argv);
 }
+*/
 
 uid_t
 PerlProcGetuid(struct IPerlProc* piPerl)
@@ -1587,6 +1613,7 @@ PerlProcGetegid(struct IPerlProc* piPerl)
     return getegid();
 }
 
+/*
 char *
 PerlProcGetlogin(struct IPerlProc* piPerl)
 {
@@ -1594,10 +1621,11 @@ PerlProcGetlogin(struct IPerlProc* piPerl)
 }
 
 int
-PerlProcKill(struct IPerlProc* piPerl, int pid, int sig)
+PerlProcKill(int pid, int sig, struct IPerlProc* piPerl)
 {
     return win32_kill(pid, sig);
 }
+*/
 
 int
 PerlProcKillpg(struct IPerlProc* piPerl, int pid, int sig)
@@ -1627,11 +1655,13 @@ PerlProcPopenList(struct IPerlProc* piPerl, const char *mode, IV narg, SV **args
     return win32_popenlist(mode, narg, args);
 }
 
+/*
 int
-PerlProcPclose(struct IPerlProc* piPerl, PerlIO *stream)
+PerlProcPclose(PerlIO *stream, struct IPerlProc* piPerl)
 {
     return win32_pclose(stream);
 }
+*/
 
 int
 PerlProcPipe(struct IPerlProc* piPerl, int *phandles)
@@ -1651,41 +1681,43 @@ PerlProcSetgid(struct IPerlProc* piPerl, gid_t g)
     return setgid(g);
 }
 
+/*
 int
-PerlProcSleep(struct IPerlProc* piPerl, unsigned int s)
+PerlProcSleep(unsigned int s, struct IPerlProc* piPerl)
 {
     return win32_sleep(s);
 }
 
 int
-PerlProcTimes(struct IPerlProc* piPerl, struct tms *timebuf)
+PerlProcTimes(struct tms *timebuf, struct IPerlProc* piPerl)
 {
     return win32_times(timebuf);
 }
 
 int
-PerlProcWait(struct IPerlProc* piPerl, int *status)
+PerlProcWait(int *status, struct IPerlProc* piPerl)
 {
     return win32_wait(status);
 }
 
 int
-PerlProcWaitpid(struct IPerlProc* piPerl, int pid, int *status, int flags)
+PerlProcWaitpid(int pid, int *status, int flags, struct IPerlProc* piPerl)
 {
     return win32_waitpid(pid, status, flags);
 }
 
 Sighandler_t
-PerlProcSignal(struct IPerlProc* piPerl, int sig, Sighandler_t subcode)
+PerlProcSignal(int sig, Sighandler_t subcode, struct IPerlProc* piPerl)
 {
     return win32_signal(sig, subcode);
 }
 
 int
-PerlProcGetTimeOfDay(struct IPerlProc* piPerl, struct timeval *t, void *z)
+PerlProcGetTimeOfDay(struct timeval *t, void *z, struct IPerlProc* piPerl)
 {
     return win32_gettimeofday(t, z);
 }
+*/
 
 #ifdef USE_ITHREADS
 static THREAD_RET_TYPE
@@ -1873,23 +1905,25 @@ PerlProcGetpid(struct IPerlProc* piPerl)
     return win32_getpid();
 }
 
+/*
 void*
-PerlProcDynaLoader(struct IPerlProc* piPerl, const char* filename)
+PerlProcDynaLoader(const char* filename, struct IPerlProc* piPerl)
 {
     return win32_dynaload(filename);
 }
 
 void
-PerlProcGetOSError(struct IPerlProc* piPerl, SV* sv, DWORD dwErr)
+PerlProcGetOSError(SV* sv, DWORD dwErr, struct IPerlProc* piPerl)
 {
     win32_str_os_error(sv, dwErr);
 }
 
 int
-PerlProcSpawnvp(struct IPerlProc* piPerl, int mode, const char *cmdname, const char *const *argv)
+PerlProcSpawnvp(int mode, const char *cmdname, const char *const *argv, struct IPerlProc* piPerl)
 {
     return win32_spawnvp(mode, cmdname, argv);
 }
+*/
 
 int
 PerlProcLastHost(struct IPerlProc* piPerl)
@@ -1901,41 +1935,61 @@ PerlProcLastHost(struct IPerlProc* piPerl)
  return h->LastHost();
 }
 
-struct IPerlProc perlProc =
+/* The function pointer type puning works since these are __cdecl i386,
+   the register+__cdecl-ish calling convenstion on Win64 and WinCE on ARM
+   (but PERL_IMPLICIT_SYS isn't available on WinCE perl). So these casts are
+   like a variodic function ignoring its "..." args and never derefing them.
+   The "..." arg being ignored is "struct IPerlProc* piPerl".
+   If __stdcall or __fastcall on i386 was used here, this would crash */
+const static struct IPerlProc perlProc =
 {
-    PerlProcAbort,
-    PerlProcCrypt,
-    PerlProcExit,
-    PerlProc_Exit,
-    PerlProcExecl,
-    PerlProcExecv,
-    PerlProcExecvp,
+    (LPProcAbort)win32_abort,
+    (LPProcCrypt)win32_crypt,
+/* GCC 4.6.3 cant/wont tailcall PerlProc*() to a "jmp" so use the non-dllimport
+   style import stubs instead of reling on GCC to optimize PerlProc*() to
+   a import stub */
+#ifndef _MSC_VER
+    (LPProcExit)exit,
+    (LPProc_Exit)_exit,
+    (LPProcExecl)execl,
+#else /* since VC 2003 uses dllimport, a C++ style static initializer function
+         will fill these 3 struct members at startup, also it means "const" is
+         ignored and struct perlProc is placed in unshared RW memory, the
+         PerlProc*() functions may or may not optimize to just "jmp" but it is
+         better than a RW struct */
+    (LPProcExit)win32_exit,
+    (LPProc_Exit)win32__exit,
+    (LPProcExecl)win32_execl,
+#endif
+
+    (LPProcExecv)win32_execvp,
+    (LPProcExecvp)win32_execvp,
     PerlProcGetuid,
     PerlProcGeteuid,
     PerlProcGetgid,
     PerlProcGetegid,
-    PerlProcGetlogin,
-    PerlProcKill,
+    (LPProcGetlogin)g_getlogin, /* in win32.c, not in CRT */
+    (LPProcKill)win32_kill,
     PerlProcKillpg,
     PerlProcPauseProc,
     PerlProcPopen,
-    PerlProcPclose,
+    (LPProcPclose)win32_pclose,
     PerlProcPipe,
     PerlProcSetuid,
     PerlProcSetgid,
-    PerlProcSleep,
-    PerlProcTimes,
-    PerlProcWait,
-    PerlProcWaitpid,
-    PerlProcSignal,
+    (LPProcSleep)win32_sleep,
+    (LPProcTimes)win32_times,
+    (LPProcWait)win32_wait,
+    (LPProcWaitpid)win32_waitpid,
+    (LPProcSignal)win32_signal,
     PerlProcFork,
-    PerlProcGetpid,
-    PerlProcDynaLoader,
-    PerlProcGetOSError,
-    PerlProcSpawnvp,
+    (LPProcGetpid)win32_getpid,
+    (LPProcDynaLoader)win32_dynaload,
+    (LPProcGetOSError)win32_str_os_error,
+    (LPProcSpawnvp)win32_spawnvp,
     PerlProcLastHost,
     PerlProcPopenList,
-    PerlProcGetTimeOfDay
+    (LPProcGetTimeOfDay)win32_gettimeofday
 };
 
 
