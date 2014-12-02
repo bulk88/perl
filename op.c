@@ -9184,7 +9184,7 @@ Perl_newXS_len_flags(pTHX_ const char *name, STRLEN len,
     } /* <- not a conditional branch */
 
 
-    sv_setpv(MUTABLE_SV(cv), proto);
+    sv_setpvsn(MUTABLE_SV(cv), proto, proto ? strlen(proto): 0);
     if (interleave) LEAVE;
     return cv;
 }

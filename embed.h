@@ -1308,6 +1308,8 @@
 #define sv_ref(a,b,c)		Perl_sv_ref(aTHX_ a,b,c)
 #define sv_resetpvn(a,b,c)	Perl_sv_resetpvn(aTHX_ a,b,c)
 #define sv_sethek(a,b)		Perl_sv_sethek(aTHX_ a,b)
+#define sv_setpvsn(a,b,c)	Perl_sv_setpvsn(aTHX_ a,b,c)
+#define sv_setpvsn_mg(a,b,c)	Perl_sv_setpvsn_mg(aTHX_ a,b,c)
 #ifndef PERL_IMPLICIT_CONTEXT
 #define tied_method		Perl_tied_method
 #endif

@@ -4648,6 +4648,17 @@ PERL_CALLCONV void	Perl_sv_setpvn_mg(pTHX_ SV *const sv, const char *const ptr, 
 #define PERL_ARGS_ASSERT_SV_SETPVN_MG	\
 	assert(sv); assert(ptr)
 
+PERL_CALLCONV void	Perl_sv_setpvsn(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
+			__attribute__nonnull__(pTHX_1);
+#define PERL_ARGS_ASSERT_SV_SETPVSN	\
+	assert(sv)
+
+PERL_CALLCONV void	Perl_sv_setpvsn_mg(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
+			__attribute__nonnull__(pTHX_1)
+			__attribute__nonnull__(pTHX_2);
+#define PERL_ARGS_ASSERT_SV_SETPVSN_MG	\
+	assert(sv); assert(ptr)
+
 PERL_CALLCONV SV*	Perl_sv_setref_iv(pTHX_ SV *const rv, const char *const classname, const IV iv)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_SV_SETREF_IV	\

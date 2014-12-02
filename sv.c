@@ -4973,6 +4973,51 @@ Perl_sv_setpvn_mg(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
     SvSETMAGIC(sv);
 }
 
+void
+Perl_sv_setpvsn(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
+{
+    PERL_ARGS_ASSERT_SV_SETPVSN;
+
+    if(len == 0) { /* too much core code relies on sv_setpvs(sv, "");
+		     to be a fancy SvCUR_set(sv, 0), plus it will probably
+		     soon use the buffer, Perl_yysomething crashes if you
+		     free the PV */
+	sv_setpvn(sv, ptr, len);
+	return;
+    }
+    else {
+	/* len is STRLEN which is unsigned, need to copy to signed */
+	const IV iv = len;
+	if (iv < 0)
+	    Perl_croak(aTHX_ "panic: sv_setpvsn called with negative strlen %"
+		       IVdf, iv);//rework to save string and nocontext
+    }
+    SV_CHECK_THINKFIRST_COW_DROP(sv);
+    if (!ptr) {
+	(void)SvOK_off(sv);
+	return;
+    }
+    SvUPGRADE(sv, SVt_PV);
+
+    SvPV_free(sv);
+    SvLEN(sv) = 0; //move this into expanded SvPV_free
+    SvCUR_set(sv, len);
+    SvPV_set(sv, ptr);
+
+    (void)SvPOK_only_UTF8(sv);		/* validate pointer */
+    SvTAINT(sv);
+    if (SvTYPE(sv) == SVt_PVCV) CvAUTOLOAD_off(sv);
+}
+
+void
+Perl_sv_setpvsn_mg(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
+{
+    PERL_ARGS_ASSERT_SV_SETPVSN_MG;
+
+    sv_setpvsn(sv,ptr,len);
+    SvSETMAGIC(sv);
+}
+
 /*
 =for apidoc sv_setpv
 
@@ -5107,7 +5152,7 @@ Perl_sv_usepvn_flags(pTHX_ SV *const sv, char *ptr, const STRLEN len, const U32 
 	    SvSETMAGIC(sv);
 	return;
     }
-    if (SvPVX_const(sv))
+    if (SvPVX_const(sv)) // why check this instead just doing the SvLEN?
 	SvPV_free(sv);
 
 #ifdef DEBUGGING

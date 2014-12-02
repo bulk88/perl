@@ -385,8 +385,8 @@ string/length pair.
     Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), SV_GMAGIC)
 #define sv_catpvs_mg(sv, str) \
     Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), SV_GMAGIC|SV_SMAGIC)
-#define sv_setpvs(sv, str) Perl_sv_setpvn(aTHX_ sv, STR_WITH_LEN(str))
-#define sv_setpvs_mg(sv, str) Perl_sv_setpvn_mg(aTHX_ sv, STR_WITH_LEN(str))
+#define sv_setpvs(sv, str) Perl_sv_setpvsn(aTHX_ sv, STR_WITH_LEN(str))
+#define sv_setpvs_mg(sv, str) Perl_sv_setpvsn_mg(aTHX_ sv, STR_WITH_LEN(str))
 #define sv_setref_pvs(rv, classname, str) \
     Perl_sv_setref_pvn(aTHX_ rv, classname, STR_WITH_LEN(str))
 #define savepvs(str) Perl_savepvn(aTHX_ STR_WITH_LEN(str))

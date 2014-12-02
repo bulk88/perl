@@ -1341,8 +1341,10 @@ PP(pp_getc)
 	RETPUSHUNDEF;
     }
     TAINT;
-    sv_setpvs(TARG, " ");
-    *SvPVX(TARG) = PerlIO_getc(IoIFP(GvIOp(gv))); /* should never be EOF */
+    {
+	char c = PerlIO_getc(IoIFP(GvIOp(gv))); /* should never be EOF */
+	sv_setpvn(TARG, &c, 1);
+    }
     if (PerlIO_isutf8(IoIFP(GvIOp(gv)))) {
 	/* Find out how many bytes the char needs */
 	Size_t len = UTF8SKIP(SvPVX_const(TARG));
