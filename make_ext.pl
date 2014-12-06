@@ -257,6 +257,43 @@ foreach my $spec (@extspec)  {
 		    [@pass_through, @{$extra_passthrough{$spec} || []}]);
 }
 
+if(IS_WIN32 && $dynamic){
+    my $usage = `rebase 2>&1`;
+    my ($have_ms_rebase, $have_ms_bind, $files, @files);
+    #msysgit ships a rebase.exe, it might wind up in %path, feel free to add support
+    if(index($usage, 'usage: rebase -b BaseAddress') == 0){
+	warn "Warning non-MS rebase program not supported. Startup speeds will suffer.\n";
+    }
+    elsif(index($usage, 'usage: REBASE [switches]') == 0){
+	$have_ms_rebase = 1;
+    }
+    else{
+	warn "Warning no rebase program found. Startup speeds will suffer.\n";
+    }
+    $usage = `bind -? 2>&1`;
+    $have_ms_bind = 1 if index($usage, 'usage: BIND [switches] image-names...') == 0;
+    #I am not sure if there are any other "bind.exe"s in the world
+    warn "Warning no bind program found. Startup speeds will suffer.\n" unless $have_ms_bind;
+
+    if($have_ms_rebase || $have_ms_bind) {
+	$files = qx'dir /s /b *.dll';
+	@files = map {$_ !~ /(\\t\\perl5\d+
+		      |lib\\auto\\Devel\\PPPort\\PPPort
+		      |lib\\auto\\XS\\Typemap\\Typemap
+		      |lib\\auto\\XS\\APItest\\APItest)
+	      \.dll$/x ? $_ : ()} split("\n", $files);
+	$files = join(' ', @files);
+    }
+    system('rebase -b 0x28000000 '.$files) if $have_ms_rebase;
+#The bind tool saves (from page type private to shareable) usually 1 4KB
+#block containing the IAT in .rdata (RO) section of each DLL, verified with
+#VMMap. Why MS puts the IAT in .rdata instead of .data who knows. VC 2003
+#with "/MERGE:.idata=.data" causes
+#"LINK : fatal error LNK1272: cannot merge '.idata' with any section"
+#!!!!!!what happens on Win64? is bind a x64 exe when compiling x64? syswow64?
+    system('bind -u -p "..\;%SystemRoot%\system32" '.$files) if $have_ms_bind;
+}
+
 sub build_extension {
     my ($ext_dir, $perl, $mname, $target, $pass_through) = @_;
 
