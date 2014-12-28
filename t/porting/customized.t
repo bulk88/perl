@@ -135,7 +135,8 @@ are not accidentally overwritten by CPAN module updates.
 
 =item C<--regen>
 
-Use this command line option to regenerate the C<customized.dat> file.
+Use this command line option to regenerate the C<customized.dat> file. The
+files must have been already added to C<Maintainers.pl>.
 
 =back
 
