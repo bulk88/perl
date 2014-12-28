@@ -1476,7 +1476,7 @@ distclean: realclean
 	-del /f $(LIBDIR)\Win32API\File\cFile.pc
 	-del /f $(LIBDIR)\buildcustomize.pl
 	-del /f $(DISTDIR)\XSLoader\XSLoader.pm
-	-del /f *.def *.map
+	-del /f perldll.def *.map
 	-if exist $(LIBDIR)\App rmdir /s /q $(LIBDIR)\App
 	-if exist $(LIBDIR)\Archive rmdir /s /q $(LIBDIR)\Archive
 	-if exist $(LIBDIR)\Attribute rmdir /s /q $(LIBDIR)\Attribute

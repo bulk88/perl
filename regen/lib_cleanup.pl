@@ -134,7 +134,7 @@ sub edit_makefile_SH {
 
 sub edit_win32_makefile {
     my ($desc, $contents) = @_;
-    my $start = "\t-del /f *.def *.map";
+    my $start = "\t-del /f perldll.def *.map";
     my $start_re = quotemeta($start);
     $contents = verify_contiguous($desc, $contents,
                                   qr!$start_re\n(?:\t-if exist (\$\(LIBDIR\)\\\S+) rmdir /s /q \1\n)+!sm,

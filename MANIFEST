@@ -2873,6 +2873,7 @@ cpan/Win32/t/GetFileVersion.t		See if Win32 extension works
 cpan/Win32/t/GetFolderPath.t		See if Win32 extension works
 cpan/Win32/t/GetFullPathName.t		See if Win32 extension works
 cpan/Win32/t/GetLongPathName.t		See if Win32 extension works
+cpan/Win32/t/GetModuleFileName.t	See if Win32 extension works
 cpan/Win32/t/GetOSName.t		See if Win32 extension works
 cpan/Win32/t/GetOSVersion.t		See if Win32 extension works
 cpan/Win32/t/GetShortPathName.t		See if Win32 extension works
@@ -5644,6 +5645,8 @@ win32/list_static_libs.pl	prints libraries for static linking
 win32/Makefile			Win32 makefile for NMAKE (Visual C++ build)
 win32/Makefile.ce		WinCE port
 win32/makefile.mk		Win32 makefile for DMAKE (BC++, VC++ builds)
+win32/ntdlldec.def		Def for making a decorated symbol ntdll.lib
+win32/ntdllundec.def		Def for making a undecorated symbol ntdll.lib
 win32/perlexe.ico		perlexe.ico image file
 win32/perlexe.manifest		Assembly manifest file
 win32/perlexe.rc		associated perl binary with icon
