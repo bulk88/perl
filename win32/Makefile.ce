@@ -387,23 +387,24 @@ CEDEFS    = -D_WINDOWS -D_WIN32_WCE=$(CEVersion) -DUNDER_CE=$(CEVersion) \
 CECFLAGS  = $(CEDEFS) -Zi
 
 !if "$(CFG)" == "DEBUG"
-CECFLAGS  = $(CECFLAGS) -Od
+OPTIMIZE        = -Od
 !endif
 
 !if "$(CFG)" == "RELEASE"
 # -O2 and -Ot give internal compiler error in perl.c and lexer.
 # Also the dll cannot be loaded by perl.exe...
 !if "$(CPU)" == "SH3"
+OPTIMIZE        = -Od
 !else
-CECFLAGS  = $(CECFLAGS) -O1
+OPTIMIZE        = -O1
 !endif
 !  IF "$(CCTYPE)" != "MSVC60"
 #turn on LTCG optimization for CCs that have it
-CECFLAGS	= $(CECFLAGS) -GL
+OPTIMIZE	= $(OPTIMIZE) -GL
 !  ENDIF
 !  IF "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC90"
 #no stack security cookie for CCs where its on by default
-CECFLAGS	= $(CECFLAGS) -GS-
+$(OPTIMIZE)	= $(OPTIMIZE) -GS-
 !  ENDIF
 !endif
 
@@ -432,7 +433,7 @@ RCDEFS    = /l 0x407 /r /d "UNICODE" /d UNDER_CE=$(CEVersion) \
 # Additional compiler flags can be specified here.
 #
 
-BUILDOPT	= $(BUILDOPT) $(CECFLAGS) -DUSE_CROSS_COMPILE
+BUILDOPT	= $(BUILDOPT) -DUSE_CROSS_COMPILE
 
 
 !IF "$(CRYPT_SRC)$(CRYPT_LIB)" == ""
@@ -510,7 +511,7 @@ LIB32		= $(LINK32) -lib
 RSC		= rc
 
 INCLUDES	= -I.\include -I. -I..
-DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT $(CRYPT_FLAG) $(CECFLAGS)
+DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT -DNO_MATHOMS $(CRYPT_FLAG) $(CECFLAGS)
 LOCDEFS		= -DPERLDLL -DPERL_CORE
 CXX_FLAG	= -TP
 
@@ -540,8 +541,8 @@ LIBBASEFILES	= $(CRYPT_LIB) $(CELIBS)
 
 LIBFILES	= $(LIBBASEFILES) $(LIBC)
 
-CFLAGS		= -nologo -GF -W3 $(INCLUDES) $(DEFINES) $(LOCDEFS) \
-		$(PCHFLAGS) $(OPTIMIZE)
+CFLAGS		= -nologo -GF -W3 $(INCLUDES) $(DEFINES) $(LOCDEFS)\
+		$(OPTIMIZE)
 
 LINK_FLAGS	= -nologo -debug -opt:ref,icf -machine:$(PROCESSOR_ARCHITECTURE)
 
@@ -732,7 +733,7 @@ DYNAMIC_EXT	= Socket IO Fcntl Opcode SDBM_File POSIX attributes B re \
 		Data/Dumper Devel/Peek ByteLoader Devel/DProf File/Glob \
 		Sys/Hostname
 
-STATIC_EXT	= DynaLoader
+STATIC_EXT	= DynaLoader Win32CORE
 
 DYNALOADER	= $(EXTDIR)\DynaLoader\DynaLoader
 
@@ -851,8 +852,12 @@ NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
 
 Extensions: ..\make_ext.pl $(CONFIGPM)
 	$(HPERL) -I..\lib -I. ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR)  --all \
-	!POSIX !Win32 !Win32API/File !Time/HiRes !Time/Piece !re !SDBM_File $(NOT_COMPILE_EXT)
+	!POSIX !Win32 !Win32API/File !Time/HiRes !re !SDBM_File $(NOT_COMPILE_EXT)
 
+Extensions_static : ..\make_ext.pl ..\lib\buildcustomize.pl list_static_libs.pl $(PERLDEP) $(CONFIGPM) Extensions_nonxs
+	$(XCOPY) ..\*.h $(COREDIR)\*.*
+	$(HPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --static
+	$(HPERL) -I..\lib list_static_libs.pl > Extensions_static
 
 Extensions_nonxs: ..\make_ext.pl ..\lib\buildcustomize.pl $(CONFIGPM) ..\pod\perlfunc.pod
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
@@ -877,6 +882,7 @@ clean: Extensions_clean
 	-@$(DEL) ..\git_version.h
   -@$(DEL) config.h perl.res
   -@$(DEL) ..\t\test_state
+  -@$(DEL) Extensions_static
 
 XDLLOBJS = \
 $(DLLDIR)\av.obj \
@@ -974,11 +980,11 @@ perldll.def : $(HPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibst_h
 	$(HPERL) -I..\lib -w ..\makedef.pl PLATFORM=wince $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
 	    CCTYPE=$(CCTYPE) -DPERL_DLL=$(PERLDLL) TARG_DIR=..\ > perldll.def
 
-$(PERLDLL) : header_check lib_check $(DLLDIR) perldll.def $(XDLLOBJS) $(PERLDLL_RES)
+$(PERLDLL) : header_check lib_check $(DLLDIR) perldll.def $(XDLLOBJS) $(PERLDLL_RES) Extensions_static
 	$(LINK32) -dll -def:perldll.def -base:0x28000000 -out:$@ \
                   $(SUBSYS) $(LDLIBPATH) \
 		  $(LINK_FLAGS) $(LIBFILES) \
-		  $(XDLLOBJS) $(PERLDLL_RES)
+		  $(XDLLOBJS) @Extensions_static $(PERLDLL_RES)
 
 $(DLLDIR) :
 	if not exist "$(DLLDIR)" mkdir "$(DLLDIR)"
