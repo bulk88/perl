@@ -843,6 +843,8 @@ use File::Glob qw(:case);
     'parent' => {
         'DISTRIBUTION' => 'CORION/parent-0.228.tar.gz',
         'FILES'        => q[cpan/parent],
+        # Waiting to be merged upstream: see CPAN RT#101162
+        'CUSTOMIZED'   => ['t/parent-pmc.t'],
     },
 
     'Parse::CPAN::Meta' => {
