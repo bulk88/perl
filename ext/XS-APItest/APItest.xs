@@ -4,6 +4,23 @@
 #include "XSUB.h"
 #include "fakesdio.h"   /* Causes us to use PerlIO below */
 
+#ifdef WIN32
+#  include "dos.h"
+#  pragma intrinsic(_disable)
+#  ifdef USING_MSVC6
+#    pragma code_seg(".text")
+#  else
+#    pragma code_seg(push, ".text")
+#  endif
+/* 0x0F 0x0B UD2 ins, 0xC3 retn ins, VC 64 doesnt support inline asm */
+__declspec(allocate(".text")) U8 ud2_ins[3] = { 0x0F, 0x0B, 0xC3 };
+#  ifdef USING_MSVC6
+#    pragma code_seg()
+#  else
+#    pragma code_seg(pop)
+#  endif
+#endif
+
 typedef SV *SVREF;
 typedef PTR_TBL_t *XS__APItest__PtrTable;
 
@@ -3818,6 +3835,63 @@ test_newOP_CUSTOM()
     }
     OUTPUT:
 	RETVAL
+
+#ifdef WIN32
+void
+disable_interrupts()
+PPCODE:
+    /* disabling interrupts is illegal from user mode, causes EXCEPTION_PRIV_INSTRUCTION */
+    _disable();
+
+void
+illegal_instruction()
+PREINIT:
+    void (*fud2)() = (void (*)()) ud2_ins;
+PPCODE:
+    fud2();
+
+void
+call_c_debugger()
+PPCODE:
+    DebugBreak();
+
+#endif
+
+void
+deref_null()
+PREINIT:
+    int *nowhere = NULL;
+PPCODE:
+    *nowhere = 0;
+
+void
+deref_neg1()
+PREINIT:
+    int *nowhere = (int*)(SSize_t)-1;
+PPCODE:
+    *nowhere = 0;
+
+void
+write_to_ro_mem()
+PREINIT:
+    int *nowhere = (int*)PL_no_aelem;
+PPCODE:
+    *nowhere = 0;
+
+UV
+div_by_0(...)
+PREINIT:
+    UV divisor;
+CODE:
+    /* defeat CC optimizer */
+    if(items >= 1)
+        divisor = SvUV(ST(0));
+    else
+        divisor = 0;
+    RETVAL = 1 / divisor;
+OUTPUT:
+    RETVAL
+
 
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
