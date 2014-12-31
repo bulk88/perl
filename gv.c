@@ -39,7 +39,7 @@ Perl stores its global variables.
 #include "feature.h"
 
 static const char S_autoload[] = "AUTOLOAD";
-static const STRLEN S_autolen = sizeof(S_autoload)-1;
+#define S_autolen (sizeof("AUTOLOAD")-1)
 
 SV *
 Perl_gv_add_by_type_p(pTHX_ GV *gv, gv_add_type type)
