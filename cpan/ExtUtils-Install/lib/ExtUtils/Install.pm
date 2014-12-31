@@ -103,7 +103,7 @@ my $CanMoveAtBoot = ($Is_Win32 || $Is_cygwin);
 
 # *note* CanMoveAtBoot is only incidentally the same condition as below
 # this needs not hold true in the future.
-my $Has_Win32API_File = ($Is_Win32 || $Is_cygwin)
+my $Has_Win32API_File = ($Is_Win32 || $Is_cygwin) && defined(&DynaLoader::boot_DynaLoader) 
     ? (eval {require Win32API::File; 1} || 0)
     : 0;
 

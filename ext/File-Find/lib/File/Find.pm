@@ -3,7 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 use warnings::register;
-our $VERSION = '1.29';
+our $VERSION = '1.30';
 require Exporter;
 require Cwd;
 
@@ -800,7 +800,9 @@ unless ($File::Find::dont_use_nlink) {
 # fallback is_tainted_pp()
 {
     local $@;
-    eval { require Scalar::Util };
+    defined(&DynaLoader::boot_DynaLoader) ?
+        eval { require Scalar::Util }
+        : ($@ = 1);
     *is_tainted = $@ ? \&is_tainted_pp : \&Scalar::Util::tainted;
 }
 

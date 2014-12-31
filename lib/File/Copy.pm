@@ -15,14 +15,15 @@ use Config;
 # During perl build, we need File::Copy but Scalar::Util might not be built yet
 # And then we need these games to avoid loading overload, as that will
 # confuse miniperl during the bootstrap of perl.
-my $Scalar_Util_loaded = eval q{ require Scalar::Util; require overload; 1 };
+my $Scalar_Util_loaded = defined(&DynaLoader::boot_DynaLoader)
+    ? eval q{ require Scalar::Util; require overload; 1 } : 0;
 our(@ISA, @EXPORT, @EXPORT_OK, $VERSION, $Too_Big, $Syscopy_is_copy);
 sub copy;
 sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.30';
+$VERSION = '2.31';
 
 require Exporter;
 @ISA = qw(Exporter);

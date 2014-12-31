@@ -10,7 +10,7 @@ print OUT <<'EOT';
 
 package XSLoader;
 
-$VERSION = "0.20";
+$VERSION = "0.21";
 
 #use strict;
 
@@ -43,6 +43,12 @@ print OUT <<'EOT';
 # NOTE: All dl_*.xs (including dl_none.xs) define a dl_error() XSUB
 boot_DynaLoader('DynaLoader') if defined(&boot_DynaLoader) &&
                                 !defined(&dl_error);
+                                
+if(!defined(&boot_DynaLoader)){
+    require Carp;
+    Carp::cluck();
+    system 'pause';
+}
 package XSLoader;
 
 sub load {

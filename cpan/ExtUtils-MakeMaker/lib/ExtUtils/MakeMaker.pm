@@ -10,7 +10,9 @@ use ExtUtils::MakeMaker::Config;
 use ExtUtils::MakeMaker::version; # ensure we always have our fake version.pm
 use Carp;
 use File::Path;
-my $CAN_DECODE = eval { require ExtUtils::MakeMaker::Locale; }; # 2 birds, 1 stone
+my $CAN_DECODE = defined(&DynaLoader::boot_DynaLoader) ?
+    eval { require ExtUtils::MakeMaker::Locale; }
+    : 0; # 2 birds, 1 stone
 eval { ExtUtils::MakeMaker::Locale::reinit('UTF-8') }
   if $CAN_DECODE and $ExtUtils::MakeMaker::Locale::ENCODING_LOCALE eq 'US-ASCII';
 
