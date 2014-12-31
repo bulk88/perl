@@ -931,11 +931,11 @@ CMD
 }
 
 sub _has_cpan_meta {
-    return eval {
+    return can_load_xs() ? eval {
       require CPAN::Meta;
       CPAN::Meta->VERSION(2.112150);
       1;
-    };
+    } : 0;
 }
 
 =head3 metafile_target
