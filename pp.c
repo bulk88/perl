@@ -2826,44 +2826,67 @@ PP(pp_srand)
 
 PP(pp_int)
 {
-    dSP; dTARGET;
+    dSP;
     tryAMAGICun_MG(int_amg, AMGf_numeric);
     {
+      dTARGET;
       SV * const sv = TOPs;
-      const IV iv = SvIV_nomg(sv);
+      IV iv;
+      SETs(TARG);
+      if(SvFLAGS(sv) & (SVf_IOK|SVp_IOK)) {
+        iv = SvIVX(sv);
+        goto have_iv;
+      }
+      else
+        iv = sv_2iv_flags(sv, 0); /* required for uninit warn */
       /* XXX it's arguable that compiler casting to IV might be subtly
 	 different from modf (for numbers inside (IV_MIN,UV_MAX)) in which
 	 else preferring IV has introduced a subtle behaviour change bug. OTOH
 	 relying on floating point to be accurate is a bug.  */
 
       if (!SvOK(sv)) {
-        SETu(0);
-      }
-      else if (SvIOK(sv)) {
+        sv_setuv(TARG, 0);
+      } /* might have become an IV during sv_2iv_flags so check again */
+      else if (SvFLAGS(sv) & (SVf_IOK|SVp_IOK)) {
+	have_iv:
 	if (SvIsUV(sv))
-	    SETu(SvUV_nomg(sv));
+	    sv_setuv(TARG, (UV)iv); /* 2C, dont fetch again thru SvUV */
 	else
-	    SETi(iv);
+	    sv_setiv(TARG, iv);
       }
       else {
-	  const NV value = SvNV_nomg(sv);
-	  if (UNLIKELY(Perl_isinfnan(value)))
-	      SETn(value);
-	  else if (value >= 0.0) {
+          NV value;
+          if (SvNOK(sv)) { /* unrolled SvNV_nomg(sv) */
+            value = SvNVX(sv);
+            if (UNLIKELY(Perl_isinfnan(value))) {
+                sv_setnv(TARG, value);
+                goto done;
+            }
+        } else {
+            value = sv_2nv_flags(sv, 0);
+/* SvIV_nomg passes through NANs, or converts PV nans */
+            assert(isREGEXP(sv) && !Perl_isinfnan(value)); /* nan unreachable since it become NOk in SvIV */
+            if(Perl_isinfnan(value)) DebugBreak();
+            if(!(isREGEXP(sv) && !Perl_isinfnan(value))) DebugBreak();
+        }
+/* do a lossy conversion */
+	  if (value >= 0.0) {
 	      if (value < (NV)UV_MAX + 0.5) {
-		  SETu(U_V(value));
+		  sv_setuv(TARG, U_V(value));
 	      } else {
-		  SETn(Perl_floor(value));
+		  sv_setnv(TARG, (NV)Perl_floor(value));
 	      }
 	  }
 	  else {
 	      if (value > (NV)IV_MIN - 0.5) {
-		  SETi(I_V(value));
+		  sv_setiv(TARG, I_V(value));
 	      } else {
-		  SETn(Perl_ceil(value));
+		  sv_setnv(TARG, (NV)Perl_ceil(value));
 	      }
 	  }
       }
+    done:
+      SvSETMAGIC(TARG);
     }
     return NORMAL;
 }

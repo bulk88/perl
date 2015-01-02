@@ -146,7 +146,7 @@ CCTYPE		= MSVC70
 # If not enabled, we automatically try to use maximum optimization
 # with all compilers that are known to have a working optimizer.
 #
-#CFG		= Debug
+CFG		= Debug
 
 #
 # uncomment to enable linking with setargv.obj under the Visual C
@@ -451,7 +451,7 @@ CXX_FLAG	= -TP -EHsc
 LIBC	= msvcrt.lib
 
 !IF  "$(CFG)" == "Debug"
-OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
+OPTIMIZE	= -O1 -MD -Zi -DDEBUGGING
 LINK_DBG	= -debug
 !ELSE
 # -O1 yields smaller code, which turns out to be faster than -O2 on x86 and x64
