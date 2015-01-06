@@ -65,6 +65,7 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
  *	order
  */
 
+#define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
@@ -189,6 +190,9 @@ static Direntry_t *	my_readdir(DIR*);
 static Direntry_t *
 my_readdir(DIR *d)
 {
+#ifdef PERL_IMPLICIT_SYS
+    dTHX;
+#endif
 #ifndef NETWARE
     return PerlDir_read(d);
 #else
@@ -454,6 +458,9 @@ globtilde(const Char *pattern, Char *patbuf, size_t patbuf_len, glob_t *pglob)
 #endif
 
 	if (((char *) patbuf)[0] == BG_EOS) {
+#ifdef PERL_IMPLICIT_SYS
+		dTHX;
+#endif
 		/*
 		 * handle a plain ~ or ~/ by expanding $HOME
 		 * first and then trying the password file
@@ -827,8 +834,12 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		(*pglob->gl_closedir)(dirp);
-	else
+	else {
+#ifdef PERL_IMPLICIT_SYS
+		dTHX;
+#endif
 		PerlDir_close(dirp);
+	}
 	return(err);
 }
 
@@ -996,8 +1007,12 @@ g_opendir(Char *str, glob_t *pglob)
 
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((DIR*)(*pglob->gl_opendir)(buf));
-
-	return(PerlDir_open(buf));
+	else {
+#ifdef PERL_IMPLICIT_SYS
+		dTHX;
+#endif
+		return(PerlDir_open(buf));
+	}
 }
 
 static int
@@ -1009,11 +1024,16 @@ g_lstat(Char *fn, Stat_t *sb, glob_t *pglob)
 		return(-1);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_lstat)(buf, sb));
+        else {
+#ifdef PERL_IMPLICIT_SYS
+		dTHX;
+#endif
 #ifdef HAS_LSTAT
-	return(PerlLIO_lstat(buf, sb));
+		return(PerlLIO_lstat(buf, sb));
 #else
-	return(PerlLIO_stat(buf, sb));
+		return(PerlLIO_stat(buf, sb));
 #endif /* HAS_LSTAT */
+	}
 }
 
 static int
@@ -1025,7 +1045,12 @@ g_stat(Char *fn, Stat_t *sb, glob_t *pglob)
 		return(-1);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_stat)(buf, sb));
-	return(PerlLIO_stat(buf, sb));
+	else {
+#ifdef PERL_IMPLICIT_SYS
+		dTHX;
+#endif
+		return(PerlLIO_stat(buf, sb));
+	}
 }
 
 static Char *
