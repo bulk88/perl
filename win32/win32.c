@@ -4495,6 +4495,29 @@ Perl_win32_init(int *argcp, char ***argvp)
 #endif
 
     ansify_path();
+    {
+    /* set the static flag in IsShimInfrastructureDisabled to 1 to disable shims for perl.exe alone
+       this makes starting cmd.exe faster */
+        char * f = (char*)GetProcAddress(GetModuleHandle("kernel32.dll"), "BaseQueryModuleData");
+        if(f) {
+            /* machine code from my WinXP 32 bit kernel32.dll */
+            if(memcmp(f, "\x8B\xFF\x55\x8B\xEC\x51\xE8", sizeof("\x8B\xFF\x55\x8B\xEC\x51\xE8")-1) == 0){
+                f += sizeof("\x8B\xFF\x55\x8B\xEC\x51\xE8")-1;
+                f = f + 4 + *(U32*)f;
+                if(memcmp(f, "\x8B\xFF\x55\x8B\xEC\x83\xEC\x20\xA1\xCC\x56\x88\x7C\x57\x33\xFF\x89\x45\xFC\xA1",
+                       sizeof("\x8B\xFF\x55\x8B\xEC\x83\xEC\x20\xA1\xCC\x56\x88\x7C\x57\x33\xFF\x89\x45\xFC\xA1")-1)
+                == 0){
+                    U32 * flag;
+                    f+= sizeof("\x8B\xFF\x55\x8B\xEC\x83\xEC\x20\xA1\xCC\x56\x88\x7C\x57\x33\xFF\x89\x45\xFC\xA1")-1;
+                    flag = *(U32**)f;
+                    /* now we have address of the static var */
+                    *flag = 1;
+                    return;
+                }
+            }
+            DebugBreak(); /* failed, time to analyze */
+        }
+    }
 }
 
 void
