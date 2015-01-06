@@ -391,13 +391,14 @@ PPCODE:
     /* For backward-compatibility with the original Perl function, we sim-
      * ply take the first argument, regardless of how many there are.
      */
-    if (items) SP ++;
-    else {
-	XPUSHs(&PL_sv_undef);
-    }
+    SP++;
     PUTBACK;
+    if (!items) {
+	EXTEND(SP,0); /* note earlier SP++ */
+	SETs(&PL_sv_undef);
+    }
     csh_glob_iter(aTHX);
-    SPAGAIN;
+    return; /* skip implicit PUTBACK */
 
 void
 bsd_glob_override(...)
