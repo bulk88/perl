@@ -101,6 +101,10 @@ static const char my_z_errmsg[][32] = {
 # define NO_WRITEABLE_DATA
 #endif
 
+/* for efficiency, optimize trace to a constant in regular builds */
+#undef  NO_WRITEABLE_DATA
+#define NO_WRITEABLE_DATA
+
 #define TRACE_DEFAULT 0
 
 #ifdef NO_WRITEABLE_DATA
@@ -133,10 +137,10 @@ GetErrorString(error_no)
 int error_no ;
 #endif
 {
-    dTHX;
     char * errstr ;
   
 #if 0
+    dTHX;
     if (error_no == BZ_ERRNO) {
         errstr = Strerror(errno) ;
     }
