@@ -237,3 +237,25 @@ PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 
 PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
 PERLVARA(G, hash_seed, PERL_HASH_SEED_BYTES, unsigned char) /* perl.c and hv.h */
+
+/*
+=for apidoc AM|osver|PL_w32_osver
+
+This is a global that contains an Win32 C<OSVERSIONINFOEX> struct that contains
+the OS version.  Type C<osver> is identical to C<OSVERSIONINFOEX>.  This global
+is a struct, not a struct pointer, use C<.> not C<-&gt;>.  C<osver> exists
+because older Win32 compilers might not have C<OSVERSIONINFOEX> in their
+headers.  If C<PL_w32_osver.dwOSVersionInfoSize != sizeof(osver)>, then the
+later elements of C<OSVERSIONINFOEX> are uninitialized, and only the subset
+of C<OSVERSIONINFO> members are valid.  It has not been decided what version
+number this will contain for Windows 8.1 and up due to recent changes by
+Microsoft to the Windows API.  For efficiency, if you will use C<PL_w32_osver>
+more than once in a function, use L</dW32OSVER> and L</w32_osver> instead of
+multiple references to C<PL_w32_osver>.
+
+=cut
+*/
+
+#ifdef WIN32
+PERLVARI(G, w32_osver, osver, {sizeof(osver)})
+#endif

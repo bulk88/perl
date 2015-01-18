@@ -182,8 +182,6 @@ Size_t	w32_ioinfo_size;/* avoid 0 extend op b4 mul, otherwise could be a U8 */
 #endif
 END_EXTERN_C
 
-static OSVERSIONINFO g_osver = {0, 0, 0, 0, 0, ""};
-
 #ifdef SET_INVALID_PARAMETER_HANDLER
 static BOOL silent_invalid_parameter_handler = FALSE;
 
@@ -517,7 +515,7 @@ Perl_my_pclose(pTHX_ PerlIO *fp)
 DllExport unsigned long
 win32_os_id(void)
 {
-    return (unsigned long)g_osver.dwPlatformId;
+    return (unsigned long)PL_w32_osver.dwPlatformId;
 }
 
 DllExport int
@@ -2045,7 +2043,7 @@ win32_uname(struct utsname *name)
     STRLEN nodemax = sizeof(name->nodename)-1;
 
     /* sysname */
-    switch (g_osver.dwPlatformId) {
+    switch (PL_w32_osver.dwPlatformId) {
     case VER_PLATFORM_WIN32_WINDOWS:
         strcpy(name->sysname, "Windows");
         break;
@@ -2062,15 +2060,15 @@ win32_uname(struct utsname *name)
 
     /* release */
     sprintf(name->release, "%d.%d",
-            g_osver.dwMajorVersion, g_osver.dwMinorVersion);
+            PL_w32_osver.dwMajorVersion, PL_w32_osver.dwMinorVersion);
 
     /* version */
     sprintf(name->version, "Build %d",
-            g_osver.dwPlatformId == VER_PLATFORM_WIN32_NT
-            ? g_osver.dwBuildNumber : (g_osver.dwBuildNumber & 0xffff));
-    if (g_osver.szCSDVersion[0]) {
+            PL_w32_osver.dwPlatformId == VER_PLATFORM_WIN32_NT
+            ? PL_w32_osver.dwBuildNumber : (PL_w32_osver.dwBuildNumber & 0xffff));
+    if (PL_w32_osver.szCSDVersion[0]) {
         char *buf = name->version + strlen(name->version);
-        sprintf(buf, " (%s)", g_osver.szCSDVersion);
+        sprintf(buf, " (%s)", PL_w32_osver.szCSDVersion);
     }
 
     /* nodename */
@@ -4475,8 +4473,12 @@ Perl_win32_init(int *argcp, char ***argvp)
      */
     //InitCommonControls();
 
-    g_osver.dwOSVersionInfoSize = sizeof(g_osver);
-    GetVersionEx(&g_osver);
+    if (PL_w32_osver.dwOSVersionInfoSize == 0) {
+/* no CE or DOS Windows, so no need to try again with the smaller
+  OSVERSIONINFOA struct */
+        PL_w32_osver.dwOSVersionInfoSize = sizeof(osver);
+        GetVersionExA((OSVERSIONINFOA*)&PL_w32_osver);
+    }
 
 #ifdef WIN32_DYN_IOINFO_SIZE
     {
