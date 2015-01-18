@@ -537,6 +537,49 @@ void win32_wait_for_children(pTHX);
 #  define PERL_WAIT_FOR_CHILDREN win32_wait_for_children(aTHX)
 #endif
 
+/* Use explicit struct definition because wSuiteMask and
+ * wProductType are not defined in the VC++ 6.0 headers.
+ * WORD type has been replaced by unsigned short because
+ * WORD is already used by Perl itself.
+ */
+typedef struct {
+    DWORD dwOSVersionInfoSize;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    DWORD dwPlatformId;
+    CHAR  szCSDVersion[128];
+    unsigned short wServicePackMajor;
+    unsigned short wServicePackMinor;
+    unsigned short wSuiteMask;
+    BYTE  wProductType;
+    BYTE  wReserved;
+} osver;
+
+/*
+=for apidoc AM|void|dW32OSVER
+
+Declares a local copy of L</PL_w32_osver>.  This is more efficienct than multiple
+references to L</PL_w32_osver>.  The local copy should be accessed through
+L</w32_osver>.
+
+=cut
+*/
+#define dW32OSVER const osver * const w32_osver_p = &PL_w32_osver
+
+/*
+=for apidoc AM||w32_osver
+
+A macro to access a local copy of L</PL_w32_osver> declared with L</dW32OSVER>.
+This is more efficient than multiple references to L</PL_w32_osver>. This macro
+is a struct, not a struct pointer, use C<.> not C<-&gt;>.
+
+=cut
+*/
+
+#define w32_osver (*w32_osver_p)
+
+
 #ifdef PERL_CORE
 /* C doesn't like repeat struct definitions */
 #if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION>=3)

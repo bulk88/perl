@@ -435,6 +435,8 @@
 #define PL_Guse_safe_putenv	(my_vars->Guse_safe_putenv)
 #define PL_veto_cleanup		(my_vars->Gveto_cleanup)
 #define PL_Gveto_cleanup	(my_vars->Gveto_cleanup)
+#define PL_w32_osver		(my_vars->Gw32_osver)
+#define PL_Gw32_osver		(my_vars->Gw32_osver)
 #define PL_watch_pvx		(my_vars->Gwatch_pvx)
 #define PL_Gwatch_pvx		(my_vars->Gwatch_pvx)
 

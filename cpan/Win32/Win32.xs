@@ -109,6 +109,7 @@ typedef void (WINAPI *PFNGetNativeSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 #   define CSIDL_FLAG_CREATE          0x8000
 #endif
 
+#if !((PERL_VERSION >= 5) && (PERL_VERSION >= 21) && (PERL_SUBVERSION >= 8))
 /* Use explicit struct definition because wSuiteMask and
  * wProductType are not defined in the VC++ 6.0 headers.
  * WORD type has been replaced by unsigned short because
@@ -127,25 +128,37 @@ struct {
     BYTE  wProductType;
     BYTE  wReserved;
 }   g_osver = {0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0};
-BOOL g_osver_ex = TRUE;
+/* by the default being null bytes instead of sizeof(g_osver), this var doesn't
+   require on disk storage in the DLL */
+#  define dW32MOD_OSVER dNOOP
+#else
+/* this stops multiple reads of IAT entry for PL_w32_osver */
+#  define dW32MOD_OSVER dW32OSVER
+#  define g_osver w32_osver
+#endif
+
+#define OSVER_HAVE_EX (g_osver.dwOSVersionInfoSize == sizeof(g_osver))
 
 #define ONE_K_BUFSIZE	1024
 
 int
 IsWin95(void)
 {
+    dW32MOD_OSVER;
     return (g_osver.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
 }
 
 int
 IsWinNT(void)
 {
+    dW32MOD_OSVER;
     return (g_osver.dwPlatformId == VER_PLATFORM_WIN32_NT);
 }
 
 int
 IsWin2000(void)
 {
+    dW32MOD_OSVER;
     return (g_osver.dwMajorVersion > 4);
 }
 
@@ -1300,20 +1313,27 @@ XS(w32_GetOSVersion)
 {
     dXSARGS;
 
-    if (GIMME_V == G_SCALAR) {
-        XSRETURN_IV(g_osver.dwPlatformId);
-    }
-    XPUSHs(sv_2mortal(newSVpvn(g_osver.szCSDVersion, strlen(g_osver.szCSDVersion))));
-
-    XPUSHs(sv_2mortal(newSViv(g_osver.dwMajorVersion)));
-    XPUSHs(sv_2mortal(newSViv(g_osver.dwMinorVersion)));
-    XPUSHs(sv_2mortal(newSViv(g_osver.dwBuildNumber)));
-    XPUSHs(sv_2mortal(newSViv(g_osver.dwPlatformId)));
-    if (g_osver_ex) {
-        XPUSHs(sv_2mortal(newSViv(g_osver.wServicePackMajor)));
-        XPUSHs(sv_2mortal(newSViv(g_osver.wServicePackMinor)));
-        XPUSHs(sv_2mortal(newSViv(g_osver.wSuiteMask)));
-        XPUSHs(sv_2mortal(newSViv(g_osver.wProductType)));
+    XSprePUSH;
+    EXTEND(SP, 9);
+    {
+	const I32 gimme = GIMME_V;
+	dW32MOD_OSVER;
+	if (gimme == G_SCALAR) {
+	    PUSHs(sv_2mortal(newSViv(g_osver.dwPlatformId)));
+	}
+	else {
+	    PUSHs(sv_2mortal(newSVpvn(g_osver.szCSDVersion, strlen(g_osver.szCSDVersion))));
+	    PUSHs(sv_2mortal(newSViv(g_osver.dwMajorVersion)));
+	    PUSHs(sv_2mortal(newSViv(g_osver.dwMinorVersion)));
+	    PUSHs(sv_2mortal(newSViv(g_osver.dwBuildNumber)));
+	    PUSHs(sv_2mortal(newSViv(g_osver.dwPlatformId)));
+	    if (OSVER_HAVE_EX) {
+		PUSHs(sv_2mortal(newSViv(g_osver.wServicePackMajor)));
+		PUSHs(sv_2mortal(newSViv(g_osver.wServicePackMinor)));
+		PUSHs(sv_2mortal(newSViv(g_osver.wSuiteMask)));
+		PUSHs(sv_2mortal(newSViv(g_osver.wProductType)));
+	    }
+	}
     }
     PUTBACK;
 }
@@ -1455,6 +1475,7 @@ XS(w32_GetFullPathName)
     dXSARGS;
     char *fullname;
     char *ansi = NULL;
+    dW32MOD_OSVER;
 
 /* The code below relies on the fact that PerlDir_mapX() returns an
  * absolute path, which is only true under PERL_IMPLICIT_SYS when
@@ -1804,15 +1825,16 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     char *file = __FILE__;
-
+#if !((PERL_VERSION >= 5) && (PERL_VERSION >= 21) && (PERL_SUBVERSION >= 8))
     if (g_osver.dwOSVersionInfoSize == 0) {
         g_osver.dwOSVersionInfoSize = sizeof(g_osver);
         if (!GetVersionExA((OSVERSIONINFOA*)&g_osver)) {
-            g_osver_ex = FALSE;
+/* OSVERSIONINFOEXA only works on NT SP6 or newer NT, no Dos Windows and no CE */
             g_osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
             GetVersionExA((OSVERSIONINFOA*)&g_osver);
         }
     }
+#endif
 
     newXS("Win32::LookupAccountName", w32_LookupAccountName, file);
     newXS("Win32::LookupAccountSID", w32_LookupAccountSID, file);
