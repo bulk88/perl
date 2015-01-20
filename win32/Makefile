@@ -533,6 +533,17 @@ LIBBASEFILES    = $(LIBBASEFILES) bufferoverflowU.lib
 
 LIBFILES	= $(LIBBASEFILES) $(LIBC)
 
+!IF "$(WIN64)" == "define"
+#On Win64, use kernel32's public API RtlPcToFileHeader which is internally is a
+#forward to ntdll's RtlPcToFileHeader, this avoids keeping the "ntldll.dll"
+#string in Win64 perl5**.dll and related overhead
+#LIBNTDLL	= ntdllundec.lib
+LIBNTDLL	=
+!ELSE
+LIBNTDLL	= ntdlldec.lib
+!ENDIF
+
+
 #EXTRACFLAGS	= -nologo -GF -W4 -wd4127 -wd4706
 EXTRACFLAGS	= -nologo -GF -W3
 !IF "$(__ICC)" == "define"
@@ -994,6 +1005,19 @@ config.w32 : $(CFGSH_TMPL)
 !ENDIF
 	@echo #endif>>$@
 
+ntdllundec.lib : ntdllundec.def
+	lib /def:ntdllundec.def /machine:$(ARCHITECTURE)
+
+!IF "$(WIN64)" == "undef"
+ntdlldec.lib : ntdlldec.def ntdllundec.lib
+#the right side of = alias is silently ignored by lib tool if right side symbol
+#doesn't exist and lib creates a .lib that wants "RtlPcToFileHeader@8" from
+#ntdll.dll which doesn't resolve since the export from ntdll.dll is
+#"RtlPcToFileHeader", using a 2nd .lib allows undecorated symbol to be "defined"
+#on Win64, due to __cdecl, the undec name is the symbol CL/win32.obj wants
+	lib /def:ntdlldec.def /machine:X86 ntdllundec.lib
+!ENDIF
+
 ..\git_version.h : $(MINIPERL) ..\make_patchnum.pl
 	cd .. && miniperl -Ilib make_patchnum.pl && cd win32
 
@@ -1025,9 +1049,9 @@ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL
 # See the comment in Makefile.SH explaining this seemingly cranky ordering
 $(MINIPERL) : ..\lib\buildcustomize.pl 
 
-..\lib\buildcustomize.pl : $(MINIDIR) $(MINI_OBJ) ..\write_buildcustomize.pl
+..\lib\buildcustomize.pl : $(LIBNTDLL) $(MINIDIR) $(MINI_OBJ) ..\write_buildcustomize.pl
 	$(LINK32) -out:$(MINIPERL) @<<
-	$(BLINK_FLAGS) $(DELAYLOAD) $(LIBFILES) $(MINI_OBJ)
+	$(BLINK_FLAGS) $(DELAYLOAD)  $(LIBNTDLL) $(LIBFILES) $(MINI_OBJ)
 <<
 	$(EMBED_EXE_MANI:..\lib\buildcustomize.pl=..\miniperl.exe)
 	$(MINIPERL) -I..\lib -f ..\write_buildcustomize.pl ..
@@ -1062,9 +1086,13 @@ perldll.def : $(MINIPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibs
 	$(MINIPERL) -I..\lib -w ..\makedef.pl PLATFORM=win32 $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
 	    CCTYPE=$(CCTYPE) TARG_DIR=..\ > perldll.def
 
+#custom ntdll.lib must be before kernel32.lib, since RtlPcToFileHeader from
+#kernel32 (which is a forward to ntdll) is only on NT >= 5.2 64 bit-only
+#kernel32.dll, 32 bit WOW kernel32.dll do not have RtlPcToFileHeader and 32 bit
+#kernel32.libs dont have it
 $(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
 	$(LINK32) -dll -def:perldll.def -base:0x28000000 -out:$@ @Extensions_static @<<
-		$(BLINK_FLAGS) $(DELAYLOAD) $(LIBFILES) $(PERLDLL_OBJ) $(PERLDLL_RES)
+		$(BLINK_FLAGS) $(DELAYLOAD) $(LIBNTDLL) $(LIBFILES) $(PERLDLL_OBJ) $(PERLDLL_RES)
 <<
 	$(EMBED_DLL_MANI)
 	$(XCOPY) $(PERLIMPLIB) $(COREDIR)
@@ -1113,7 +1141,8 @@ $(PERLEXE): $(PERLDLL) $(CONFIGPM) $(PERLEXE_OBJ) $(PERLEXE_RES)
 
 $(PERLEXESTATIC): $(PERLSTATICLIB) $(CONFIGPM) $(PERLEXEST_OBJ) $(PERLEXE_RES)
 	$(LINK32) -out:$@ $(BLINK_FLAGS) \
-	    $(PERLEXEST_OBJ) $(PERLEXE_RES) $(PERLSTATICLIB) $(LIBFILES) $(SETARGV_OBJ)
+	    $(PERLEXEST_OBJ) $(PERLEXE_RES) $(PERLSTATICLIB) $(LIBNTDLL) \
+	    $(LIBFILES) $(SETARGV_OBJ)
 	$(EMBED_EXE_MANI)
 
 MakePPPort: $(MINIPERL) $(CONFIGPM) Extensions_nonxs
@@ -1233,7 +1262,7 @@ distclean: realclean
 	-del /f $(LIBDIR)\Win32API\File\cFile.pc
 	-del /f $(LIBDIR)\buildcustomize.pl
 	-del /f $(DISTDIR)\XSLoader\XSLoader.pm
-	-del /f *.def *.map
+	-del /f perldll.def *.map
 	-if exist $(LIBDIR)\App rmdir /s /q $(LIBDIR)\App
 	-if exist $(LIBDIR)\Archive rmdir /s /q $(LIBDIR)\Archive
 	-if exist $(LIBDIR)\Attribute rmdir /s /q $(LIBDIR)\Attribute

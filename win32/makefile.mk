@@ -488,6 +488,8 @@ LIBFILES	= $(LIBC) \
 		  -loleaut32 -lnetapi32 -luuid -lws2_32 -lmpr \
 		  -lwinmm -lversion -lodbc32 -lodbccp32 -lcomctl32
 
+LIBNTDLL	= libntdll.a
+
 .IF  "$(CFG)" == "Debug"
 OPTIMIZE	= -g -O2 -DDEBUGGING
 LINK_DBG	= -g
@@ -1054,6 +1056,14 @@ $(GLOBEXE) : perlglob$(o)
 
 perlglob$(o)  : perlglob.c
 
+$(LIBNTDLL) :
+.IF "$(CCTYPE)" == "GCC"
+	$(IMPLIB) -k -d ntdlldec.def -l libntdll.a
+.ELSE
+	@exit 1
+.ENDIF
+
+
 config.w32 : $(CFGSH_TMPL)
 	copy $(CFGSH_TMPL) config.w32
 
@@ -1255,10 +1265,10 @@ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL
 # See the comment in Makefile.SH explaining this seemingly cranky ordering
 $(MINIPERL) : ..\lib\buildcustomize.pl
 
-..\lib\buildcustomize.pl : $(MINIDIR) $(MINI_OBJ) $(CRTIPMLIBS) ..\write_buildcustomize.pl
+..\lib\buildcustomize.pl : $(MINIDIR) $(MINI_OBJ) $(LIBNTDLL) $(CRTIPMLIBS) ..\write_buildcustomize.pl
 .IF "$(CCTYPE)" == "GCC"
 	$(LINK32) -v -mconsole -o $(MINIPERL) $(BLINK_FLAGS) \
-	    $(mktmp $(LKPRE) $(MINI_OBJ) $(LIBFILES) $(LKPOST))
+	    $(mktmp $(LKPRE) $(MINI_OBJ) $(LIBNTDLL) $(LIBFILES) $(LKPOST))
 .ELSE
 	$(LINK32) -out:$(MINIPERL) $(BLINK_FLAGS) \
 	    @$(mktmp $(DELAYLOAD) $(LIBFILES) $(MINI_OBJ))
@@ -1303,12 +1313,12 @@ perldll.def : $(MINIPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl create_perllibs
 	$(MINIPERL) -I..\lib -w ..\makedef.pl PLATFORM=win32 $(OPTIMIZE) $(DEFINES) \
 	$(BUILDOPT) CCTYPE=$(CCTYPE) TARG_DIR=..\ > perldll.def
 
-$(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
+$(PERLDLL): $(LIBNTDLL) perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
 .IF "$(CCTYPE)" == "GCC"
 	$(LINK32) -mdll -o $@ -Wl,--base-file -Wl,perl.base $(BLINK_FLAGS) \
 	    $(mktmp $(LKPRE) $(PERLDLL_OBJ) \
 		$(shell @type Extensions_static) \
-		$(LIBFILES) $(LKPOST))
+		$(LIBNTDLL) $(LIBFILES) $(LKPOST))
 	$(IMPLIB) --output-lib $(PERLIMPLIB) \
 		--dllname $(PERLDLL:b).dll \
 		--def perldll.def \
@@ -1317,7 +1327,7 @@ $(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
 	$(LINK32) -mdll -o $@ $(BLINK_FLAGS) \
 	    $(mktmp $(LKPRE) $(PERLDLL_OBJ) \
 		$(shell @type Extensions_static) \
-		$(LIBFILES) perl.exp $(LKPOST))
+		$(LIBNTDLL) $(LIBFILES) perl.exp $(LKPOST))
 .ELSE
 	$(LINK32) -dll -def:perldll.def -out:$@ $(BLINK_FLAGS) \
 	    @Extensions_static \
@@ -1510,7 +1520,7 @@ distclean: realclean
 	-del /f $(LIBDIR)\Win32API\File\cFile.pc
 	-del /f $(LIBDIR)\buildcustomize.pl
 	-del /f $(DISTDIR)\XSLoader\XSLoader.pm
-	-del /f *.def *.map
+	-del /f perldll.def *.map
 	-if exist $(LIBDIR)\App rmdir /s /q $(LIBDIR)\App
 	-if exist $(LIBDIR)\Archive rmdir /s /q $(LIBDIR)\Archive
 	-if exist $(LIBDIR)\Attribute rmdir /s /q $(LIBDIR)\Attribute
