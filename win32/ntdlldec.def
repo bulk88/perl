@@ -1,0 +1,3 @@
+LIBRARY ntdll.dll
+EXPORTS
+    RtlPcToFileHeader@8 = RtlPcToFileHeader

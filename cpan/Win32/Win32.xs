@@ -732,6 +732,45 @@ XS(w32_FreeLibrary)
     XSRETURN_NO;
 }
 
+XS(w32_GetModuleFileName)
+{
+    dXSARGS;
+    dXSTARG;
+    HINSTANCE handle;
+    char buffer [MAX_PATH+1];
+    DWORD size;
+    if (items != 1)
+	croak("usage: Win32::GetModuleFileName($handle)\n");
+    handle = (HINSTANCE)SvIV(*SP);
+    size = GetModuleFileName(handle, buffer, MAX_PATH+1);
+    if(size == 0) {
+	got_zero:
+	if(GetLastError() != ERROR_SUCCESS)
+	    sv_setpvn(TARG, NULL, size);
+	else
+	    sv_setpvn(TARG, "", size);
+    } else if (size == MAX_PATH+1) {
+	DWORD oldsize = size;
+	retry:
+	oldsize <<= 1; /* double the buffer */
+	sv_grow(TARG, oldsize); /* unknown type, can't use SvGROW */
+	size = GetModuleFileName(handle, SvPVX(TARG), oldsize);
+	if(size == 0)
+	    goto got_zero;
+	else if (size == oldsize)
+	    goto retry;
+	else {
+	    SvCUR_set(TARG, size);
+	    SvPOK_only(TARG);
+	}
+    } else {
+	sv_setpvn(TARG, buffer, size);
+    }
+    SETTARG;
+    /* no putback b/c SP didn't move */
+    return;
+}
+
 XS(w32_GetProcAddress)
 {
     dXSARGS;
@@ -1783,6 +1822,7 @@ BOOT:
     newXS("Win32::MsgBox", w32_MsgBox, file);
     newXS("Win32::LoadLibrary", w32_LoadLibrary, file);
     newXS("Win32::FreeLibrary", w32_FreeLibrary, file);
+    newXS("Win32::GetModuleFileName", w32_GetModuleFileName, file);
     newXS("Win32::GetProcAddress", w32_GetProcAddress, file);
     newXS("Win32::RegisterServer", w32_RegisterServer, file);
     newXS("Win32::UnregisterServer", w32_UnregisterServer, file);

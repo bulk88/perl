@@ -99,6 +99,22 @@ END_EXTERN_C
 #  define getlogin g_getlogin
 #endif
 
+/* not present in old SDKs */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+NTSYSAPI
+PVOID
+NTAPI
+RtlPcToFileHeader(
+    PVOID PcValue,
+    PVOID *BaseOfImage
+    );
+#ifdef __cplusplus
+}
+#endif
+
 /* VS2005 (MSC version 14) provides a mechanism to set an invalid
  * parameter handler.  This functionality is not available in the
  * 64-bit compiler from the Platform SDK, which unfortunately also
@@ -4214,6 +4230,36 @@ XS(w32_SetChildShowWindow)
     XSRETURN(1);
 }
 
+/* due to SxS and people building and upgraded XS modules using different CCs
+   than the core was built with, for example, VC core and later on CPAN shell
+   with Mingw GCC, or VC 6 core, later on VC 2008 modules, core's CRT can only
+   be determined from core, not Win32:: module */
+XS(w32_GetCRTDllHandle)
+{
+    dXSARGS;
+    if (items != 0)
+	croak_xs_usage(cv, "");
+    EXTEND(SP, 1);
+    {
+	dXSTARG;
+	PVOID handle;
+/* RtlPcToFileHeader is used as a replacement for
+   GetModuleHandleEx GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS. GetModuleHandleEx
+   is not available on Win2K. GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS is
+   wrapper around RtlPcToFileHeader which was undocumented introduced in
+   NT 3.51 and became public API through kernel32.dll in 64 bit only OSes.
+   Note, syswow64 32 bit kernel32 does not export RtlPcToFileHeader. To avoid
+   complexity, GetProcAddress and OS version checking isn't done for
+   GetModuleHandleEx, and use RtlPcToFileHeader on all platforms. Although this
+   code could be ifdefed to use GetModuleHandleEx on Win64 since all Win64s
+   ever made (>= NT 5.2) have GetModuleHandleEx. */
+	handle = RtlPcToFileHeader(__pioinfo, &handle);
+	PUSHi((IV)handle);
+    }
+    PUTBACK;
+    return;
+}
+
 void
 Perl_init_os_extras(void)
 {
@@ -4235,6 +4281,7 @@ Perl_init_os_extras(void)
 #endif
 
     newXS("Win32::SetChildShowWindow", w32_SetChildShowWindow, file);
+    newXS("Win32::GetCRTDllHandle", w32_GetCRTDllHandle, file);
 }
 
 void *
