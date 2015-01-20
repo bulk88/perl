@@ -92,11 +92,9 @@ sub is_static
 
 sub has_xs_or_c {
     my $dir = shift;
+    my $item;
     opendir my $dh, $dir or die "opendir $dir: $!";
-    while (defined (my $item = readdir $dh)) {
-        return 1 if $item =~ /\.xs$/;
-        return 1 if $item =~ /\.c$/;
-    }
+    $item =~ /\.(?:xs|c)$/ ? return 1 : () while defined ($item = readdir $dh);
     return 0;
 }
 
