@@ -25,8 +25,10 @@
 #  define PERL_DISABLE_PMC
 
 /* allow minitest to work */
-#  define PERL_TEXTMODE_SCRIPTS
+/* #  define USE_PERLIO disable for build performance */
+/* #  define PERL_TEXTMODE_SCRIPTS disable, causes bad behaviour with PerlIO off */
 #endif
+#define PERL_DISABLE_PMC
 
 #ifdef WIN32_NO_SOCKETS
 #  undef HAS_SOCKET
