@@ -86,6 +86,7 @@ main(int argc, char **argv, char **env)
     /* noop unless Configure is given -Accflags=-DPERL_GPROF_CONTROL */
     PERL_GPROF_MONCONTROL(0);
 
+    _set_error_mode(_OUT_TO_MSGBOX);
 #ifdef NO_ENV_ARRAY_IN_MAIN
     PERL_SYS_INIT3(&argc,&argv,&environ);
 #else
