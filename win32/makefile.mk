@@ -642,6 +642,16 @@ LIBBASEFILES    += bufferoverflowU.lib
 
 LIBFILES	= $(LIBBASEFILES) $(LIBC)
 
+.IF "$(WIN64)" == "define"
+#On Win64, use kernel32's public API RtlPcToFileHeader which is internally is a
+#forward to ntdll's RtlPcToFileHeader, this avoids keeping the "ntdll.dll"
+#string in Win64 perl5**.dll and related overhead
+#LIBNTDLL	= ntdllundec.lib
+LIBNTDLL	=
+.ELSE
+LIBNTDLL	= ntdlldec.lib
+.ENDIF
+
 EXTRACFLAGS	= -nologo -GF -W3
 .IF "$(__ICC)" == "define"
 EXTRACFLAGS	+= -Qstd=c99
@@ -1041,12 +1051,24 @@ $(GLOBEXE) : perlglob$(o)
 
 perlglob$(o)  : perlglob.c
 
-$(LIBNTDLL) :
+# which of these gets built depends on the value of LIBNTDLL
 .IF "$(CCTYPE)" == "GCC"
+libntdll.a : ntdlldec.def
 	$(IMPLIB) -k -d ntdlldec.def -l libntdll.a
-.ELSE
-	@exit 1
-.ENDIF
+.ELSE #VC family
+ntdllundec.lib : ntdllundec.def
+	lib /def:ntdllundec.def /machine:$(ARCHITECTURE)
+
+.IF "$(WIN64)" != "define"
+ntdlldec.lib : ntdlldec.def ntdllundec.lib
+#the right side of = alias is silently ignored by lib tool if right side symbol
+#doesn't exist and lib creates a .lib that wants "RtlPcToFileHeader@8" from
+#ntdll.dll which doesn't resolve since the export from ntdll.dll is
+#"RtlPcToFileHeader", using a 2nd .lib allows undecorated symbol to be "defined"
+#on Win64, due to __cdecl, the undec name is the symbol CL/win32.obj wants
+	lib /def:ntdlldec.def /machine:X86 ntdllundec.lib
+.ENDIF #not WIN64
+.ENDIF #is GCC
 
 
 config.w32 : $(CFGSH_TMPL)
@@ -1256,7 +1278,7 @@ $(MINIPERL) : ..\lib\buildcustomize.pl
 	    $(mktmp $(LKPRE) $(MINI_OBJ) $(LIBNTDLL) $(LIBFILES) $(LKPOST))
 .ELSE
 	$(LINK32) -subsystem:console -out:$(MINIPERL) $(BLINK_FLAGS) \
-	    @$(mktmp $(DELAYLOAD) $(LIBFILES) $(MINI_OBJ))
+	    @$(mktmp $(DELAYLOAD) $(LIBNTDLL) $(LIBFILES) $(MINI_OBJ))
 	$(EMBED_EXE_MANI:s/$@/$(MINIPERL)/)
 .ENDIF
 	$(MINIPERL) -I..\lib -f ..\write_buildcustomize.pl ..
@@ -1316,8 +1338,8 @@ $(PERLDLL): $(LIBNTDLL) perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_sta
 .ELSE
 	$(LINK32) -dll -def:perldll.def -out:$@ $(BLINK_FLAGS) \
 	    @Extensions_static \
-	    @$(mktmp -base:0x28000000 $(DELAYLOAD) $(LIBFILES) \
-		$(PERLDLL_RES) $(PERLDLL_OBJ))
+	    -base:0x28000000 $(DELAYLOAD) $(PERLEXPLIB) $(LIBNTDLL) $(LIBFILES) \
+	    $(PERLDLL_RES) $(PERLDLL_OBJ)
 	$(EMBED_DLL_MANI)
 .ENDIF
 	$(XCOPY) $(PERLIMPLIB) $(COREDIR)
