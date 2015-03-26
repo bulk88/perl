@@ -608,8 +608,6 @@ struct regnode_ssc {
 #define REG_UNBOUNDED_QUANTIFIER_SEEN       0x00001000
 
 
-START_EXTERN_C
-
 #ifdef PLUGGABLE_RE_EXTENSION
 #include "re_nodes.h"
 #else
@@ -639,9 +637,6 @@ EXTCONST regexp_engine PL_core_reg_engine = {
 };
 #endif /* DOINIT */
 #endif /* PLUGGABLE_RE_EXTENSION */
-
-
-END_EXTERN_C
 
 
 /* .what is a character array with one character for each member of .data

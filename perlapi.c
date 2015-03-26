@@ -31,7 +31,6 @@
 #if defined (MULTIPLICITY) && defined (PERL_GLOBAL_STRUCT)
 
 /* accessor functions for Perl "global" variables */
-START_EXTERN_C
 
 #undef PERLVARI
 #define PERLVARI(p,v,t,i) PERLVAR(p,v,t)
@@ -52,8 +51,6 @@ START_EXTERN_C
 #undef PERLVARA
 #undef PERLVARI
 #undef PERLVARIC
-
-END_EXTERN_C
 
 #endif /* MULTIPLICITY && PERL_GLOBAL_STRUCT */
 

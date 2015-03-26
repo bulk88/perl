@@ -89,7 +89,6 @@ than just the ASCII characters, so C<is_invariant_string> is preferred.
 #include "utfebcdic.h"
 
 #else	/* ! EBCDIC */
-START_EXTERN_C
 
 #ifdef DOINIT
 EXTCONST unsigned char PL_utf8skip[] = {
@@ -116,8 +115,6 @@ EXTCONST unsigned char PL_utf8skip[] = {
 #else
 EXTCONST unsigned char PL_utf8skip[];
 #endif
-
-END_EXTERN_C
 
 /* Native character to/from iso-8859-1.  Are the identity functions on ASCII
  * platforms */

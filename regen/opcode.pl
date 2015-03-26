@@ -816,7 +816,6 @@ sub print_PL_op_private_tables {
     }
 
     print $fh <<EOF;
-START_EXTERN_C
 
 #ifndef PERL_GLOBAL_STRUCT_INIT
 
@@ -895,8 +894,6 @@ $PL_op_private_valid
 #  endif /* !DOINIT */
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
 
-END_EXTERN_C
-
 
 EOF
 
@@ -973,7 +970,6 @@ print $on "#define OP_FREED MAXO\n";
 # Emit op names and descriptions.
 
 print $oc <<'END';
-START_EXTERN_C
 
 #ifndef DOINIT
 EXTCONST char* const PL_op_name[];
@@ -1010,16 +1006,12 @@ print $oc <<'END';
 };
 #endif
 
-END_EXTERN_C
-
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
 END
 
 # Emit ppcode switch array.
 
 print $oc <<'END';
-
-START_EXTERN_C
 
 #ifdef PERL_GLOBAL_STRUCT_INIT
 #  define PERL_PPADDR_INITED
@@ -1189,8 +1181,6 @@ print $oc <<'END';
 #endif
 
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
-
-END_EXTERN_C
 END
 
 # Emit OP_IS_* macros
