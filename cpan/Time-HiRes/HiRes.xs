@@ -732,7 +732,7 @@ myNVtime()
 static void
 hrstatns(UV *atime_nsec, UV *mtime_nsec, UV *ctime_nsec)
 {
-  dTHXR;
+  dTHX;
 #if TIME_HIRES_STAT == 1
   *atime_nsec = PL_statcache.st_atimespec.tv_nsec;
   *mtime_nsec = PL_statcache.st_mtimespec.tv_nsec;
@@ -1285,7 +1285,7 @@ PROTOTYPE: ;$
 	fakeop.op_flags = GIMME_V == G_ARRAY ? OPf_WANT_LIST :
 		GIMME_V == G_SCALAR ? OPf_WANT_SCALAR : OPf_WANT_VOID;
 	PL_op = &fakeop;
-	(void)fakeop.op_ppaddr(aTHXR);
+	(void)fakeop.op_ppaddr(aTHX);
 	SPAGAIN;
 	LEAVE;
 	nret = SP+1 - &ST(0);
