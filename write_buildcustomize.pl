@@ -41,8 +41,16 @@ my @toolchain = qw(cpan/AutoLoader/lib
 		   dist/constant/lib
 		   );
 
-# Used only in ExtUtils::Liblist::Kid::_win32_ext()
-push @toolchain, 'cpan/Text-ParseWords/lib' if $^O eq 'MSWin32';
+# Text-ParseWords used only in ExtUtils::Liblist::Kid::_win32_ext()
+# the rest are for XS building on Win32, since nonxs and xs build simultaneously
+# on Win32 if parallel building
+push @toolchain, qw(
+	cpan/Text-ParseWords/lib
+	dist/ExtUtils-ParseXS/lib
+	cpan/Getopt-Long/lib
+	cpan/parent/lib
+	cpan/ExtUtils-Constant/lib
+) if $^O eq 'MSWin32';
 push @toolchain, 'ext/VMS-Filespec/lib' if $^O eq 'VMS';
 
 unshift @INC, @toolchain;
