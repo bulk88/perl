@@ -1,4 +1,5 @@
 
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT /* we want efficiency */
 
 /* I guese no private function needs pTHX_ and aTHX_ */

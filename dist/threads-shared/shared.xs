@@ -115,6 +115,7 @@
  * without the prefix (e.g., sv, tmp or obj).
  */
 
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"

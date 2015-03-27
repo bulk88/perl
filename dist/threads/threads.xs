@@ -1,3 +1,4 @@
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 /* Workaround for mingw 32-bit compiler by mingw-w64.sf.net - has to come before any #include.
  * It also defines USE_NO_MINGW_SETJMP_TWO_ARGS for the mingw.org 32-bit compilers ... but

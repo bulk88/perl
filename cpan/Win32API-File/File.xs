@@ -1,5 +1,6 @@
 /* Win32API/File.xs */
 
+#define SMALL_LIBC
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"

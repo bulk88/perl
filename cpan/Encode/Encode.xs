@@ -2,6 +2,7 @@
  $Id: Encode.xs,v 2.33 2015/01/22 10:17:32 dankogai Exp $
  */
 
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"

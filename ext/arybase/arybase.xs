@@ -1,3 +1,4 @@
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT     /* we want efficiency */
 #define PERL_EXT
 #include "EXTERN.h"

@@ -31,6 +31,7 @@ ENDHEADER
 
 if (not exists $ENV{PERL_NO_GET_CONTEXT} or $ENV{PERL_NO_GET_CONTEXT}) {
 $SECTION{xshead}{code} .= <<END;
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 END
 }
