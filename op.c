@@ -4217,11 +4217,11 @@ static OP *
 S_fold_constants(pTHX_ OP *o)
 {
     dVAR;
-    OP * VOL curop;
+    OP * JMPVOL curop;
     OP *newop;
-    VOL I32 type = o->op_type;
+    JMPVOL I32 type = o->op_type;
     bool is_stringify;
-    SV * VOL sv = NULL;
+    SV * JMPVOL sv = NULL;
     int ret = 0;
     I32 oldscope;
     OP *old_next;

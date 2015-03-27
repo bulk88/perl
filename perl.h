@@ -581,6 +581,19 @@
 #   define VOL
 #endif
 
+/* JMPVOL is a version of VOL to use when there is a setjmp/longjmp in the
+ * function. On some platforms VOL isn't required for setjmp/longjmp, this macro
+ * accounts for that.
+ *
+ * On Win32, longjmp/setjmp saves registers which is not required by the POSIX
+ * spec, so VOL is unnecessary.
+ */
+#ifdef WIN32
+#  define JMPVOL
+#else
+#  define JMPVOL VOL
+#endif
+
 /* By compiling a perl with -DNO_TAINT_SUPPORT or -DSILENT_NO_TAINT_SUPPORT,
  * you get a perl without taint support, but doubtlessly with a lesser
  * degree of support. Do not do so unless you know exactly what it means

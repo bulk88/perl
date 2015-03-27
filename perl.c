@@ -524,7 +524,7 @@ int
 perl_destruct(pTHXx)
 {
     dVAR;
-    VOL signed char destruct_level;  /* see possible values in intrpvar.h */
+    JMPVOL signed char destruct_level;  /* see possible values in intrpvar.h */
     HV *hv;
 #ifdef DEBUG_LEAKING_SCALARS_FORK_DUMP
     pid_t child;
@@ -2671,14 +2671,14 @@ L<perlcall>.
 */
 
 I32
-Perl_call_sv(pTHX_ SV *sv, VOL I32 flags)
+Perl_call_sv(pTHX_ SV *sv, JMPVOL I32 flags)
           		/* See G_* flags in cop.h */
 {
     dVAR; dSP;
     LOGOP myop;		/* fake syntax tree node */
     METHOP method_op;
     I32 oldmark;
-    VOL I32 retval = 0;
+    JMPVOL I32 retval = 0;
     I32 oldscope;
     bool oldcatch = CATCH_GET;
     int ret;
@@ -2819,8 +2819,8 @@ Perl_eval_sv(pTHX_ SV *sv, I32 flags)
     dVAR;
     dSP;
     UNOP myop;		/* fake syntax tree node */
-    VOL I32 oldmark = SP - PL_stack_base;
-    VOL I32 retval = 0;
+    JMPVOL I32 oldmark = SP - PL_stack_base;
+    JMPVOL I32 retval = 0;
     int ret;
     OP* const oldop = PL_op;
     dJMPENV;
