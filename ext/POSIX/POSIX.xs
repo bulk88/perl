@@ -11,6 +11,7 @@
 	#include <sys/utsname.h>
 #endif	/* NETWARE */
 
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"

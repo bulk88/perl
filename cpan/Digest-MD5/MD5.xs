@@ -35,6 +35,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT     /* we want efficiency */
 #include "EXTERN.h"
 #include "perl.h"

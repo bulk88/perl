@@ -2,6 +2,7 @@
  * This program is free software; you can redistribute it and/or
  * modify it under the same terms as Perl itself.
  */
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT /* we want efficiency */
 #include <EXTERN.h>
 #include <perl.h>

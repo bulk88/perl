@@ -25,6 +25,8 @@ metamail, which comes with this message:
 */
 
 
+
+#define SMALL_LIBC
 #ifdef __cplusplus
 extern "C" {
 #endif

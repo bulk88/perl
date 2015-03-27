@@ -290,6 +290,24 @@ extern const __declspec(selectany) union { unsigned __int64 __q; double __d; }
 __PL_nan_u = { 0x7FF8000000000000UI64 };
 #  define NV_NAN ((NV)__PL_nan_u.__d)
 
+
+/*get rid of CRT startup code on MSVC, Mingw has more problems removing it
+  so only remove it on MSVC
+  XS modules must do #define SMALL_LIBC before including */
+#  ifdef SMALL_LIBC
+BOOL WINAPI _DllMainCRTStartup(
+    HINSTANCE hinstDLL,
+    DWORD fdwReason,
+    LPVOID lpReserved )
+{
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        return DisableThreadLibraryCalls(hinstDLL);
+    }
+    return TRUE;
+}
+#  endif
+
+
 #endif /* _MSC_VER */
 
 #ifdef __MINGW32__		/* Minimal Gnu-Win32 */

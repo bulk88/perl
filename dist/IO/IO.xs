@@ -4,6 +4,7 @@
  * modify it under the same terms as Perl itself.
  */
 
+#define SMALL_LIBC
 #define PERL_EXT_IO
 
 #define PERL_NO_GET_CONTEXT

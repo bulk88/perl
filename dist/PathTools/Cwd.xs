@@ -2,6 +2,7 @@
  * ex: set ts=8 sts=4 sw=4 et:
  */
 
+#define SMALL_LIBC
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"
