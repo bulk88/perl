@@ -150,12 +150,20 @@ print OUT <<'EOT';
     };
     push(@DynaLoader::dl_librefs,$libref);  # record loaded object
 
+EOT
+
+    if ($^O eq 'freemint') {
+print OUT <<'EOT';
     my @unresolved = dl_undef_symbols();
     if (@unresolved) {
         require Carp;
         Carp::carp("Undefined symbols present after loading $file: @unresolved\n");
     }
 
+EOT
+    }
+
+print OUT <<'EOT';
     $boot_symbol_ref = dl_find_symbol($libref, $bootname) or do {
         require Carp;
         Carp::croak("Can't find '$bootname' symbol in $file\n");

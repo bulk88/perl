@@ -163,6 +163,10 @@ C<IPC::Open3> threw to the callers of C<open3> would have an irrelavent
 message derived from C<$!> which was in an undefined state, instead of the
 C<$@> message which triggers the failure path inside C<open3>.
 
+=item *
+
+L<DynaLoader> has been upgraded from version 1.32 to 1.33.
+
 =back
 
 =head2 Removed Modules and Pragmata

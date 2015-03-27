@@ -163,7 +163,7 @@ dl_find_symbol(libhandle, symbolname)
 
 
 void
-dl_undef_symbols()
+dl_undef_symbols(...)
     CODE:
 
 

@@ -85,7 +85,7 @@ package DynaLoader;
 # Tim.Bunce@ig.co.uk, August 1994
 
 BEGIN {
-    $VERSION = '1.32';
+    $VERSION = '1.33';
 }
 
 use Config;
@@ -394,12 +394,14 @@ sub bootstrap {
 
     push(@dl_librefs,$libref);  # record loaded object
 
+    <<$^O-eq-freemint>>
     my @unresolved = dl_undef_symbols();
     if (@unresolved) {
 	require Carp;
 	Carp::carp("Undefined symbols present after loading $file: @unresolved\n");
     }
 
+    <</$^O-eq-freemint>>
     $boot_symbol_ref = dl_find_symbol($libref, $bootname) or
          croak("Can't find '$bootname' symbol in $file\n");
 

@@ -328,8 +328,8 @@ dl_find_symbol(librefptr,symname)
 
 
 void
-dl_undef_symbols()
-    PPCODE:
+dl_undef_symbols(...)
+    CODE:
 
 
 # These functions should not need changing on any platform:
