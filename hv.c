@@ -3435,7 +3435,9 @@ Perl_refcounted_he_new_pvn(pTHX_ struct refcounted_he *parent,
 #endif
 
     he->refcounted_he_data[0] = hekflags;
-    he->refcounted_he_refcnt = 1;
+    ATOMIC_U32CNT_INIT(he->refcounted_he_refcnt);
+    /*lock aquire needed?*/
+    ATOMIC_U32CNT_SET(he->refcounted_he_refcnt, 1);
 
     return he;
 }
@@ -3506,10 +3508,7 @@ Perl_refcounted_he_free(pTHX_ struct refcounted_he *he) {
     while (he) {
 	struct refcounted_he *copy;
 	U32 new_count;
-
-	HINTS_REFCNT_LOCK;
-	new_count = --he->refcounted_he_refcnt;
-	HINTS_REFCNT_UNLOCK;
+	ATOMIC_U32CNT_DEC(he->refcounted_he_refcnt, new_count);
 	
 	if (new_count) {
 	    return;
@@ -3541,10 +3540,10 @@ Perl_refcounted_he_inc(pTHX_ struct refcounted_he *he)
     dVAR;
 #endif
     PERL_UNUSED_CONTEXT;
+    /* remove the null check ? */
     if (he) {
-	HINTS_REFCNT_LOCK;
-	he->refcounted_he_refcnt++;
-	HINTS_REFCNT_UNLOCK;
+	U32 unused;
+	ATOMIC_U32CNT_INC(he->refcounted_he_refcnt, unused);
     }
     return he;
 }

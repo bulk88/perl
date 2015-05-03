@@ -2709,7 +2709,7 @@ DllExport void
 Perl_win32_term(void)
 {
     dTHX;
-    HINTS_REFCNT_TERM;
+    ATOMIC_U32CNT_TERM_LOCK;
     OP_REFCNT_TERM;
     PERLIO_TERM;
     MALLOC_TERM;

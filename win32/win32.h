@@ -722,5 +722,15 @@ DllExport void *win32_signal_context(void);
 #define Win_CreateSemaphore   CreateSemaphore
 #endif
 
+#define USE_ATOMIC
+#define S_atomic_fetch_addU32(a, b) _InterlockedExchangeAdd(&(a)->val, (b))
+#define S_atomic_fetch_subU32(a, b) _InterlockedExchangeAdd(&(a)->val, -(b))
+#define S_atomic_storeU32(a, b) ((a)->val = (b))
+#define S_atomic_loadU32(a) ((a)->val)
+
+
+/* per MSDN for VC 2003 , you have to declare it yourself */
+EXTERN_C   LONG  __cdecl _InterlockedExchangeAdd(LPLONG volatile Addend, LONG Value);
+
 #endif /* _INC_WIN32_PERL5 */
 

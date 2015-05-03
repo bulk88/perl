@@ -4548,7 +4548,7 @@ Perl_win32_init(int *argcp, char ***argvp)
 void
 Perl_win32_term(void)
 {
-    HINTS_REFCNT_TERM;
+    ATOMIC_U32CNT_TERM_LOCK;
     OP_REFCNT_TERM;
     PERLIO_TERM;
     MALLOC_TERM;

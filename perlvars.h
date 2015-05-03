@@ -92,9 +92,7 @@ PERLVARI(G, perlio_debug_fd, int, 0)	/* the fd to write perlio debug into, 0 mea
 PERLVARI(G, mmap_page_size, IV, 0)
 #endif
 
-#if defined(USE_ITHREADS)
-PERLVAR(G, hints_mutex, perl_mutex)    /* Mutex for refcounted he refcounting */
-#endif
+dATOMIC_U32CNT_LOCK                     /* fallback mutex for platforms without atomics */
 
 #ifdef DEBUGGING
 PERLVARI(G, watch_pvx,	char *, NULL)

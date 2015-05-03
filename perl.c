@@ -92,7 +92,7 @@ S_init_tls_and_interp(PerlInterpreter *my_perl)
 	PERL_SET_THX(my_perl);
 	OP_REFCNT_INIT;
 	OP_CHECK_MUTEX_INIT;
-	HINTS_REFCNT_INIT;
+	ATOMIC_U32CNT_INIT_LOCK;
 	MUTEX_INIT(&PL_dollarzero_mutex);
 	MUTEX_INIT(&PL_my_ctx_mutex);
 #  endif

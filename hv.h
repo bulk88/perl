@@ -534,7 +534,7 @@ struct refcounted_he {
 	STRLEN            refcounted_he_u_len;
 	void		 *refcounted_he_u_ptr;	/* Might be useful in future */
     } refcounted_he_val;
-    U32	                  refcounted_he_refcnt;	/* reference count */
+    ATOMICU32BOX	  refcounted_he_refcnt;	/* reference count */
     /* First byte is flags. Then NUL-terminated value. Then for ithreads,
        non-NUL terminated key.  */
     char                  refcounted_he_data[1];
@@ -582,22 +582,6 @@ a string/length pair, and no precomputed hash.
 	    ? chain->refcounted_he_val.refcounted_he_u_len + 1 : 0)	\
 	 + 1 + chain->refcounted_he_data)
 #endif
-
-#  ifdef USE_ITHREADS
-#    define HINTS_REFCNT_LOCK		MUTEX_LOCK(&PL_hints_mutex)
-#    define HINTS_REFCNT_UNLOCK		MUTEX_UNLOCK(&PL_hints_mutex)
-#  else
-#    define HINTS_REFCNT_LOCK		NOOP
-#    define HINTS_REFCNT_UNLOCK		NOOP
-#  endif
-#endif
-
-#ifdef USE_ITHREADS
-#  define HINTS_REFCNT_INIT		MUTEX_INIT(&PL_hints_mutex)
-#  define HINTS_REFCNT_TERM		MUTEX_DESTROY(&PL_hints_mutex)
-#else
-#  define HINTS_REFCNT_INIT		NOOP
-#  define HINTS_REFCNT_TERM		NOOP
 #endif
 
 /* Hash actions

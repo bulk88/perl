@@ -377,6 +377,51 @@ get_regex_charset_name(const U32 flags, STRLEN* const lenp)
     return "?";	    /* Unknown */
 }
 
+#if defined(USE_ITHREADS) && ! defined(USE_ATOMIC)
+
+/* no atomic ops fallbacks */
+PERL_STATIC_INLINE U32
+S_u32cnt_fb_inc(ATOMICU32BOX * u32)
+{
+    U32 ret;
+    MUTEX_LOCK(&PL_no_atomics_lock);
+    ret = ++u32->val;
+    MUTEX_UNLOCK(&PL_no_atomics_lock);
+    return ret;
+}
+
+PERL_STATIC_INLINE U32
+S_u32cnt_fb_dec(ATOMICU32BOX * u32)
+{
+    U32 ret;
+    MUTEX_LOCK(&PL_no_atomics_lock);
+    ret = --u32->val;
+    MUTEX_UNLOCK(&PL_no_atomics_lock);
+    return ret;
+}
+
+#  ifdef ATOMIC_ALWAYS_LOCK_U32
+PERL_STATIC_INLINE U32
+S_u32cnt_fb_get(ATOMICU32BOX * u32)
+{
+    U32 ret;
+    MUTEX_LOCK(&PL_no_atomics_lock);
+    ret = u32->val;
+    MUTEX_UNLOCK(&PL_no_atomics_lock);
+    return ret;
+}
+
+PERL_STATIC_INLINE void
+S_u32cnt_fb_set(ATOMICU32BOX * u32, U32 newval)
+{
+    MUTEX_LOCK(&PL_no_atomics_lock);
+    u32->val = newval;
+    MUTEX_UNLOCK(&PL_no_atomics_lock);
+}
+#  endif
+
+#endif
+
 __forceinline char *
 S_sv_2pv_flags(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
 {

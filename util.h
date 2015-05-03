@@ -229,6 +229,143 @@ means arg not present, 1 is empty string/null byte */
 #  define HS_CXT cv
 #endif
 
+
+/* design notes
+  -on some CPUs, you must explictly synchronize and flush the caches of all CPUs
+   in the system, then lock the mem bus for all reads and/or all writes
+   (AKA memory barrier)
+  -on some CPUs, anything larger than a U8/char might be synthesized at multiple
+   memory reads, so even simple C gets and sets with "=" operator
+   could see giberish intermediate values
+  -locks come in kernel (void * or 1 machine word sized) and user mode variants
+   which are called futexes or Win32's CRITICAL_SECTION, a CRITICAL_SECTION is
+   a large >0x20 byte sized struct, not 1 machine word
+  -in some CPUs, atomic ops are 1 undivisible asm op (x86), in other RISC CPUs
+   the are implemented by 1. locking the mem bus 2. load 3. manipulate 4. store
+   5. unlock mem bus, or by 1. mark a memblock faux-RO using a asm op, 2. load
+   3. manipulate 4. conditional store if not dirty, else goto 1
+  -some CPUs have no atomic operations. PA-RISC has a traditionally useless
+   "exchange with null" atomic op, and ARM <= V5 has nothing atomic. On these 2
+   platforms, Linux kernel assists in sythesizing usermode atomic ops.
+   For ARM <= 5, Linux maintains a CAS function in shared to all processes but
+   RO memory at function pointer 0xffff0fc0. The CAS function executes in user
+   mode. If an interupt happens in the middle of the magical CAS function, the
+   kernel interrupt handler sees the last executed user mode instruction pointer
+   is in inside the magical CAS function at 0xffff0fc0, it special cases things
+   to make things look atomic to user mode. This isnt SMP safe, but <= ARM V5
+   was never mfged as SMP.
+
+   For PA-RISC, Linux uses the PA-RISC "gateway page", which when the CPU jumps
+   to code inside the gateway page, the code inside the gateway page executes
+   with kernel privilages. Linux does not swap address space to kernel space
+   from user mode, but does have to disable interrupts, plus aquire a kernel mode
+   spinlock mutex (selected by hashing the atomic user mode address) on the
+   memory block to stop other CPUs
+   https://github.com/torvalds/linux/blob/master/arch/parisc/kernel/syscall.S
+   -whether the OS or the CPU supports atomic ops in user mode, doesn't mean the
+   CC supports atomic ops
+   -the only thing remotely approaching a standard for atomics is GCC's
+   non-standardized __sync_* family, and C++11's __atomic_* family
+   -atomics can be intrinsics/builtins, or normal C functions calls to
+    a "libc" or syscalls to the kernel, or inline declared C functions containing
+    inline asm in the C headers
+   -the CC might not support __sync_* and not support __atomic_* but supports
+    OS specific atomic ops
+   -some CC or OS might be using http://en.wikipedia.org/wiki/Dekker%27s_algorithm
+    internally
+   -regarding the front end macros, the retval is always an arg, never the
+   "return" of the macro, this allows the macro to internally be a do {;} while (0)
+   and to declare vars, without proprietary GCC only PERL_USE_GCC_BRACE_GROUPS
+*/
+
+#ifdef USE_ITHREADS
+#  ifdef USE_ATOMIC
+/* make sure there is no accidental usage without the correct macros */
+typedef struct {
+    U32 val;
+} ATOMICU32BOX;
+#    define dATOMIC_U32CNT(a)            ATOMICU32BOX a
+/* use as a replacement for PERLVAR this is a declaration of a mutex, or empty */
+#    define dATOMIC_U32CNT_LOCK          /* empty since it might wind up in a struct and not optimized away */
+/* initialize a struct or alloc memory if needed*/
+#    define ATOMIC_U32CNT_INIT(a)        ATOMIC_U32CNT_SET(a, 0)
+/* initialize a struct or alloc memory if needed*/
+#    define ATOMIC_U32CNT_INIT_LOCK      NOOP
+/* returns new value in arg b*/
+#    define ATOMIC_U32CNT_INC(a, b)      (void)((b) = S_atomic_fetch_addU32(&(a), 1))
+/* returns new value in arg b*/
+#    define ATOMIC_U32CNT_DEC(a, b)      (void)((b) = S_atomic_fetch_subU32(&(a), 1))
+/* returns existing value in arg b*/
+#    define ATOMIC_U32CNT_GET(a, b)      (void)((b) = S_atomic_loadU32(&(a)))
+/* returns nothing */
+#    define ATOMIC_U32CNT_SET(a, b)      S_atomic_storeU32(&(a), (b))
+#    define ATOMIC_U32CNT_TERM(a)        NOOP
+#    define ATOMIC_U32CNT_TERM_LOCK      NOOP
+
+#  else
+/* make sure there is no accidental usage without the correct macros */
+typedef struct {
+    U32 val;
+} ATOMICU32BOX;
+#    define dATOMIC_U32CNT(a)            ATOMICU32BOX a
+#    define dATOMIC_U32CNT_LOCK          PERLVAR(G, no_atomics_lock, perl_mutex)
+#    define ATOMIC_U32CNT_INIT(a)        NOOP
+#    define ATOMIC_U32CNT_INIT_LOCK      MUTEX_INIT(&PL_no_atomics_lock)
+/* returns new value in arg b*/
+#    define ATOMIC_U32CNT_INC(a, b)      (void)((b) = S_u32cnt_fb_inc(&(a)))
+/* returns new value in arg b*/
+#    define ATOMIC_U32CNT_DEC(a, b)      (void)((b) = S_u32cnt_fb_dec(&(a)))
+
+/*  ATOMIC_ALWAYS_LOCK unconditional reads and writes require locking.
+    For example, the CPU is incapable of native U32 loads and stores, and a U32
+    read is synthesized by the CC with 4 independent, interruptable, U8 reads,
+    or more realistically, 2 U16 reads */
+#    ifdef ATOMIC_ALWAYS_LOCK_U32
+/* returns existing value */
+#      define ATOMIC_U32CNT_GET(a, b)    (void)((b) = S_u32cnt_fb_get(&(a)))
+/* returns nothing */
+#      define ATOMIC_U32CNT_SET(a, newval) S_u32cnt_fb_set(&(a), newval)
+#    else
+/* returns existing value in arg b*/
+#      define ATOMIC_U32CNT_GET(a, b)       ATOMIC_U32CNT_UNSAFE_GET(a, b)
+/* returns nothing */
+#      define ATOMIC_U32CNT_SET(a, b)       ATOMIC_U32CNT_UNSAFE_SET(a, b)
+/* returns existing value */
+#    endif
+#    define ATOMIC_U32CNT_UNSAFE_GET(a, b)  (void)((b) = (a).val)
+/* returns nothing */
+#    define ATOMIC_U32CNT_UNSAFE_SET(a, b)  (void)((a).val = (b))
+#    define ATOMIC_U32CNT_TERM(a)           NOOP
+#    define ATOMIC_U32CNT_TERM_LOCK         MUTEX_DESTROY(&PL_no_atomics_lock)
+#  endif /* ifdef USE_ATOMIC */
+#else /* #ifdef USE_ITHREADS */
+/* no thread safety/no OS threads version, without thread.h, assume this
+    platform has no threads at all, only processes, and processes can't
+    communicate through shared memory (one definition of threads are "processes
+    that share the same memory space") */
+/* make sure there is no accidental usage without the correct macros */
+typedef struct {
+    U32 val;
+} ATOMICU32BOX;
+#  define dATOMIC_U32CNT(a)            ATOMICU32BOX a
+#  define dATOMIC_U32CNT_LOCK
+#  define ATOMIC_U32CNT_INIT(a)        NOOP
+#  define ATOMIC_U32CNT_INIT_LOCK      NOOP
+/* returns new value */
+#  define ATOMIC_U32CNT_INC(a, b)         (void)((b) = ++(a).val)
+/* returns new value */
+#  define ATOMIC_U32CNT_DEC(a, b)         (void)((b) = --(a).val)
+/* returns existing value  in arg b*/
+#  define ATOMIC_U32CNT_GET(a, b)         ATOMIC_U32CNT_UNSAFE_GET(a, b)
+/* returns nothing */
+#  define ATOMIC_U32CNT_SET(a, b)         ATOMIC_U32CNT_UNSAFE_SET(a, b)
+#  define ATOMIC_U32CNT_UNSAFE_GET(a, b)  (void)((b) = (a).val)
+/* returns nothing */
+#  define ATOMIC_U32CNT_UNSAFE_SET(a, b)  (void)((a).val = (b))
+#  define ATOMIC_U32CNT_TERM(a)        NOOP
+#  define ATOMIC_U32CNT_TERM_LOCK      NOOP
+#endif
+
 /*
  * ex: set ts=8 sts=4 sw=4 et:
  */
