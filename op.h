@@ -987,23 +987,6 @@ Sets the sibling of o to sib
 #define newATTRSUB(f, o, p, a, b) Perl_newATTRSUB_x(aTHX_  f, o, p, a, b, FALSE)
 #define newSUB(f, o, p, b)	newATTRSUB((f), (o), (p), NULL, (b))
 
-/*
-=head1 Hook manipulation
-*/
-
-#ifdef USE_ITHREADS
-#  define OP_CHECK_MUTEX_INIT		MUTEX_INIT(&PL_check_mutex)
-#  define OP_CHECK_MUTEX_LOCK		MUTEX_LOCK(&PL_check_mutex)
-#  define OP_CHECK_MUTEX_UNLOCK		MUTEX_UNLOCK(&PL_check_mutex)
-#  define OP_CHECK_MUTEX_TERM		MUTEX_DESTROY(&PL_check_mutex)
-#else
-#  define OP_CHECK_MUTEX_INIT		NOOP
-#  define OP_CHECK_MUTEX_LOCK		NOOP
-#  define OP_CHECK_MUTEX_UNLOCK		NOOP
-#  define OP_CHECK_MUTEX_TERM		NOOP
-#endif
-
-
 /* Stuff for OP_MULTDEREF/pp_multideref. */
 
 /* actions */

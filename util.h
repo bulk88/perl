@@ -302,6 +302,12 @@ typedef struct {
 #    define ATOMIC_U32CNT_TERM(a)        NOOP
 #    define ATOMIC_U32CNT_TERM_LOCK      NOOP
 
+/* can't be a special box struct since PL_check is public API */
+#    define dATOMIC_PTR_XCHG_LOCK          /* empty since it might wind up in a struct and not optimized away */
+#    define ATOMIC_PTR_XCHG_INIT_LOCK      NOOP
+#    define ATOMIC_PTR_XCHG(ptr, new, old) (void)((old) = S_ptr_xchg((ptr), (new)))
+#    define ATOMIC_PTR_XCHG_TERM_LOCK      NOOP
+
 #  else
 /* make sure there is no accidental usage without the correct macros */
 typedef struct {
@@ -337,6 +343,13 @@ typedef struct {
 #    define ATOMIC_U32CNT_UNSAFE_SET(a, b)  (void)((a).val = (b))
 #    define ATOMIC_U32CNT_TERM(a)           NOOP
 #    define ATOMIC_U32CNT_TERM_LOCK         MUTEX_DESTROY(&PL_no_atomics_lock)
+
+/* can't be a special box struct since PL_check is public API */
+/* reusing the lock for U32CNT since check_op replacement is very rare and save memory */
+#    define dATOMIC_PTR_XCHG_LOCK          /* empty since it might wind up in a struct and not optimized away */
+#    define ATOMIC_PTR_XCHG_INIT_LOCK      NOOP
+#    define ATOMIC_PTR_XCHG(ptr, new, old) (void)((old) = S_ptr_xchg_fb((ptr), (new)))
+#    define ATOMIC_PTR_XCHG_TERM_LOCK      NOOP
 #  endif /* ifdef USE_ATOMIC */
 #else /* #ifdef USE_ITHREADS */
 /* no thread safety/no OS threads version, without thread.h, assume this
@@ -364,6 +377,12 @@ typedef struct {
 #  define ATOMIC_U32CNT_UNSAFE_SET(a, b)  (void)((a).val = (b))
 #  define ATOMIC_U32CNT_TERM(a)        NOOP
 #  define ATOMIC_U32CNT_TERM_LOCK      NOOP
+
+/* can't be a special box struct since PL_check is public API */
+#  define dATOMIC_PTR_XCHG_LOCK          /* empty since it might wind up in a struct and not optimized away */
+#  define ATOMIC_PTR_XCHG_INIT_LOCK      NOOP
+#  define ATOMIC_PTR_XCHG(ptr, new, old) (void)(((old) = *(ptr)), (*(ptr) = (new)))
+#  define ATOMIC_PTR_XCHG_TERM_LOCK      NOOP
 #endif
 
 /*

@@ -14439,12 +14439,8 @@ Perl_wrap_op_checker(pTHX_ Optype opcode,
     PERL_UNUSED_CONTEXT;
     PERL_ARGS_ASSERT_WRAP_OP_CHECKER;
     if (*old_checker_p) return;
-    OP_CHECK_MUTEX_LOCK;
-    if (!*old_checker_p) {
-	*old_checker_p = PL_check[opcode];
-	PL_check[opcode] = new_checker;
-    }
-    OP_CHECK_MUTEX_UNLOCK;
+    /* replace with compare against NULL */
+    ATOMIC_PTR_XCHG(&PL_check[opcode], new_checker, *old_checker_p);
 }
 
 #include "XSUB.h"

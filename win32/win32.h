@@ -730,7 +730,25 @@ DllExport void *win32_signal_context(void);
 
 
 /* per MSDN for VC 2003 , you have to declare it yourself */
-EXTERN_C   LONG  __cdecl _InterlockedExchangeAdd(LPLONG volatile Addend, LONG Value);
+EXTERN_C LONG  __cdecl _InterlockedExchangeAdd(LPLONG volatile Addend, LONG Value);
+#pragma intrinsic(_InterlockedExchangeAdd)
+
+/* on VC 2003 32 bit, error messages when we dont do this stuff ourselves
+win32\win32.h(738) : warning C4163: '_InterlockedExchangePointer' : not available as an intrinsic function
+win32\win32.h(743) : warning C4164: '_InterlockedExchange' : intrinsic function not declared
+*/
+
+#ifndef WIN64
+#  define _InterlockedExchangePointer(Target, Value) \
+    (PVOID)_InterlockedExchange((PLONG)(Target), (LONG)(Value))
+EXTERN_C LONG __cdecl _InterlockedExchange(LONG volatile *Target, LONG Value);
+#  pragma intrinsic(_InterlockedExchange)
+#endif
+
+//EXTERN_C PVOID __cdecl _InterlockedExchangePointer(PVOID volatile *Target, PVOID Value);
+#define S_ptr_xchg _InterlockedExchangePointer
+
+
 
 #endif /* _INC_WIN32_PERL5 */
 

@@ -418,6 +418,18 @@ S_u32cnt_fb_set(ATOMICU32BOX * u32, U32 newval)
     u32->val = newval;
     MUTEX_UNLOCK(&PL_no_atomics_lock);
 }
+
+PERL_STATIC_INLINE void *
+S_ptr_xchg_fb(void ** ptr, void * newptr)
+{
+    void * oldptr;
+    MUTEX_LOCK(&PL_no_atomics_lock);
+    oldptr = *ptr;
+    *ptr = newptr;
+    MUTEX_UNLOCK(&PL_no_atomics_lock);
+    return oldptr;
+}
+
 #  endif
 
 #endif
