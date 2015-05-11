@@ -1216,6 +1216,8 @@ use File::Glob qw(:case);
     'Time::HiRes' => {
         'DISTRIBUTION' => 'ZEFRAM/Time-HiRes-1.9726.tar.gz',
         'FILES'        => q[cpan/Time-HiRes],
+        # CPAN release eventually
+        'CUSTOMIZED'   => [ 'HiRes.xs' ],
     },
 
     'Time::Local' => {
