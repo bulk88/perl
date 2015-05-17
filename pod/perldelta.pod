@@ -378,6 +378,11 @@ only execute on Vista and higher.
 
 =item *
 
+Parallel building has been added to the dmake C<makefile.mk> makefile. All
+Win32 compilers are supported.
+
+=item *
+
 You can now build perl with GNU Make and GCC.  [perl #123440]
 
 =item *
