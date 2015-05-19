@@ -22,8 +22,6 @@
 
 #if defined (MULTIPLICITY) && defined (PERL_GLOBAL_STRUCT)
 
-START_EXTERN_C
-
 #undef PERLVAR
 #undef PERLVARA
 #undef PERLVARI
@@ -41,8 +39,6 @@ START_EXTERN_C
 #undef PERLVARI
 #undef PERLVARIC
 
-END_EXTERN_C
-
 #if defined(PERL_CORE)
 
 /* accessor functions for Perl "global" variables */
@@ -51,8 +47,6 @@ END_EXTERN_C
    the perl executable */
 
 #ifndef PERL_NO_FORCE_LINK
-
-START_EXTERN_C
 
 #ifndef DOINIT
 EXTCONST void * const PL_force_link_funcs[];
@@ -92,8 +86,6 @@ EXTCONST void * const PL_force_link_funcs[] = {
 #undef PERLVARIC
 };
 #endif	/* DOINIT */
-
-END_EXTERN_C
 
 #endif	/* PERL_NO_FORCE_LINK */
 

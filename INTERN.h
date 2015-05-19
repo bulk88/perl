@@ -21,9 +21,12 @@
 
 #  if (defined(WIN32) && defined(__MINGW32__)) || defined(__SYMBIAN32__)
 #    ifdef __cplusplus
-#      define EXT	__declspec(dllexport)
+#      define EXT	EXTERN_C __declspec(dllexport)
 #      define dEXT
-#      define EXTCONST	__declspec(dllexport) extern const
+/* Win32 GCC errors out with
+  "..\perl.h:4614:35: error: expected unqualified-id before string constant"
+  if dllexport is first, then EXTERN_C */
+#      define EXTCONST	EXTERN_C __declspec(dllexport) const
 #      define dEXTCONST	const
 #    else
 #      define EXT	__declspec(dllexport)
@@ -33,9 +36,9 @@
 #    endif
 #  else
 #    ifdef __cplusplus
-#      define EXT
+#      define EXT      EXTERN_C
 #      define dEXT
-#      define EXTCONST extern const
+#      define EXTCONST EXTERN_C const
 #      define dEXTCONST const
 #    else
 #      define EXT

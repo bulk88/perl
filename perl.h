@@ -4641,8 +4641,6 @@ extern char **	environ;	/* environment variables supplied via exec */
 				STRINGIFY(PERL_API_VERSION) "." \
 				STRINGIFY(PERL_API_SUBVERSION)
 
-START_EXTERN_C
-
 /* handy constants */
 EXTCONST char PL_warn_uninit[]
   INIT("Use of uninitialized value%s%s%s");
@@ -5224,8 +5222,6 @@ EXTCONST char *const PL_phase_names[];
 
 #define PL_hints PL_compiling.cop_hints
 
-END_EXTERN_C
-
 /*****************************************************************************/
 /* This lexer/parser stuff is currently global since yacc is hard to reenter */
 /*****************************************************************************/
@@ -5528,15 +5524,18 @@ struct tempsym; /* defined in pp_pack.c */
  * these include variables that would have been their struct-s
  */
 
+#ifdef DOINIT
+#define PERLVAR(prefix,var,type) EXT type PL_##var; type PL_##var;
+#define PERLVARA(prefix,var,n,type) EXT type PL_##var[n]; type PL_##var[n];
+#else
 #define PERLVAR(prefix,var,type) EXT type PL_##var;
 #define PERLVARA(prefix,var,n,type) EXT type PL_##var[n];
+#endif
 #define PERLVARI(prefix,var,type,init) EXT type  PL_##var INIT(init);
 #define PERLVARIC(prefix,var,type,init) EXTCONST type PL_##var INIT(init);
 
 #if !defined(MULTIPLICITY)
-START_EXTERN_C
 #  include "intrpvar.h"
-END_EXTERN_C
 #endif
 
 #ifdef PERL_CORE
@@ -5550,11 +5549,7 @@ END_EXTERN_C
 #include "embed.h"
 
 #ifndef PERL_GLOBAL_STRUCT
-START_EXTERN_C
-
 #  include "perlvars.h"
-
-END_EXTERN_C
 #endif
 
 #undef PERLVAR
@@ -5581,8 +5576,6 @@ struct PerlHandShakeInterpreter {
 #  undef PERLVARI
 #  undef PERLVARIC
 #endif
-
-START_EXTERN_C
 
 /* dummy variables that hold pointers to both runops functions, thus forcing
  * them *both* to get linked in (useful for Peek.xs, debugging etc) */
@@ -5678,8 +5671,6 @@ EXTCONST bool PL_valid_types_NV_set[];
 #endif
 
 #include "overload.h"
-
-END_EXTERN_C
 
 struct am_table {
   U8 flags;

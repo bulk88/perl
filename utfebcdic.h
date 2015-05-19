@@ -108,8 +108,6 @@
  * UTF-EBCDIC is 0x3FFF, instead of 0x7FFF in UTF-8.
  */
 
-START_EXTERN_C
-
 #ifdef DOINIT
 
 #include "ebcdic_tables.h"
@@ -125,8 +123,6 @@ EXTCONST U8 PL_fold_latin1[];
 EXTCONST U8 PL_latin1_lc[];
 EXTCONST U8 PL_mod_latin1_uc[];
 #endif
-
-END_EXTERN_C
 
 /* EBCDIC-happy ways of converting native code to UTF-8 */
 

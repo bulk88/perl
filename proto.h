@@ -16,7 +16,6 @@
  * Edit those files and run 'make regen_headers' to effect changes.
  */
 
-START_EXTERN_C
 PERL_CALLCONV UV	ASCII_TO_NEED(const UV enc, const UV ch)
 			__attribute__deprecated__
 			__attribute__warn_unused_result__
@@ -8353,6 +8352,5 @@ PERL_CALLCONV int	Perl_magic_regdatum_set(pTHX_ SV* sv, MAGIC* mg)
 #ifdef PERL_CORE
 #  include "pp_proto.h"
 #endif
-END_EXTERN_C
 
 /* ex: set ro: */

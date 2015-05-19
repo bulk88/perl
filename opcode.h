@@ -144,7 +144,6 @@
 #define Perl_pp_custom Perl_unimplemented_op
 #define Perl_pp_reach Perl_pp_rkeys
 #define Perl_pp_rvalues Perl_pp_rkeys
-START_EXTERN_C
 
 #ifndef DOINIT
 EXTCONST char* const PL_op_name[];
@@ -954,11 +953,7 @@ EXTCONST char* const PL_op_desc[] = {
 };
 #endif
 
-END_EXTERN_C
-
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
-
-START_EXTERN_C
 
 #ifdef PERL_GLOBAL_STRUCT_INIT
 #  define PERL_PPADDR_INITED
@@ -2195,8 +2190,6 @@ EXTCONST U32 PL_opargs[] = {
 
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
 
-END_EXTERN_C
-
 
 #define OPpLVREF_SV             0x00
 #define OPpARG1_MASK            0x01
@@ -2292,7 +2285,6 @@ END_EXTERN_C
 #define OPpPV_IS_UTF8           0x80
 #define OPpSPLIT_IMPLIM         0x80
 #define OPpTRANS_DELETE         0x80
-START_EXTERN_C
 
 #ifndef PERL_GLOBAL_STRUCT_INIT
 
@@ -3318,8 +3310,6 @@ EXTCONST U8 PL_op_private_valid[] = {
 
 #  endif /* !DOINIT */
 #endif /* !PERL_GLOBAL_STRUCT_INIT */
-
-END_EXTERN_C
 
 
 

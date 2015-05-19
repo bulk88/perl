@@ -117,7 +117,11 @@
 #  endif
 #else /* MSVC noreturn support inside the interp */
 #  ifdef _MSC_VER
-#    define PERL_CALLCONV_NO_RET __declspec(noreturn)
+#    ifdef __cplusplus
+#      define PERL_CALLCONV_NO_RET extern "C" __declspec(noreturn)
+#    else
+#      define PERL_CALLCONV_NO_RET __declspec(noreturn)
+#    endif
 #  endif
 #endif
 
