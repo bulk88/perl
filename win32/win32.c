@@ -182,6 +182,10 @@ Size_t	w32_ioinfo_size;/* avoid 0 extend op b4 mul, otherwise could be a U8 */
 #endif
 END_EXTERN_C
 
+/* initialized by Perl_win32_init/PERL_SYS_INIT */
+static HKEY HKCU_Perl_hnd;
+static HKEY HKLM_Perl_hnd;
+
 #ifdef SET_INVALID_PARAMETER_HANDLER
 static BOOL silent_invalid_parameter_handler = FALSE;
 
@@ -271,34 +275,28 @@ set_w32_module_name(void)
 
 /* *svp (if non-NULL) is expected to be POK (valid allocated SvPVX(*svp)) */
 static char*
-get_regstr_from(HKEY hkey, const char *valuename, SV **svp)
+get_regstr_from(HKEY handle, const char *valuename, SV **svp)
 {
     /* Retrieve a REG_SZ or REG_EXPAND_SZ from the registry */
-    HKEY handle;
     DWORD type;
-    const char *subkey = "Software\\Perl";
     char *str = NULL;
     long retval;
+    DWORD datalen;
 
-    retval = RegOpenKeyEx(hkey, subkey, 0, KEY_READ, &handle);
-    if (retval == ERROR_SUCCESS) {
-	DWORD datalen;
-	retval = RegQueryValueEx(handle, valuename, 0, &type, NULL, &datalen);
-	if (retval == ERROR_SUCCESS
-	    && (type == REG_SZ || type == REG_EXPAND_SZ))
-	{
-	    dTHX;
-	    if (!*svp)
-		*svp = sv_2mortal(newSVpvs(""));
-	    SvGROW(*svp, datalen);
-	    retval = RegQueryValueEx(handle, valuename, 0, NULL,
-				     (PBYTE)SvPVX(*svp), &datalen);
-	    if (retval == ERROR_SUCCESS) {
-		str = SvPVX(*svp);
-		SvCUR_set(*svp,datalen-1);
-	    }
+    retval = RegQueryValueEx(handle, valuename, 0, &type, NULL, &datalen);
+    if (retval == ERROR_SUCCESS
+	&& (type == REG_SZ || type == REG_EXPAND_SZ))
+    {
+	dTHX;
+	if (!*svp)
+	    *svp = sv_2mortal(newSVpvs(""));
+	SvGROW(*svp, datalen);
+	retval = RegQueryValueEx(handle, valuename, 0, NULL,
+				 (PBYTE)SvPVX(*svp), &datalen);
+	if (retval == ERROR_SUCCESS) {
+	    str = SvPVX(*svp);
+	    SvCUR_set(*svp,datalen-1);
 	}
-	RegCloseKey(handle);
     }
     return str;
 }
@@ -307,11 +305,22 @@ get_regstr_from(HKEY hkey, const char *valuename, SV **svp)
 static char*
 get_regstr(const char *valuename, SV **svp)
 {
-    char *str = get_regstr_from(HKEY_CURRENT_USER, valuename, svp);
-    if (!str)
-	str = get_regstr_from(HKEY_LOCAL_MACHINE, valuename, svp);
-    return str;
+    char *ptr;
+    if (HKCU_Perl_hnd) {
+	ptr = get_regstr_from(HKCU_Perl_hnd, valuename, svp);
+	if (!ptr)
+	    goto try_HKLM;
+    }
+    else {
+	try_HKLM:
+	ptr = (char*)HKLM_Perl_hnd;
+	if (ptr)
+	    ptr = get_regstr_from((HKEY)ptr, valuename, svp);
+	/* else pass through NULL from the HKEY, instead of NULL assignment op */
+    }
+    return ptr;
 }
+#endif /* ifndef WIN32_NO_REGISTRY */
 
 /* *prev_pathp (if non-NULL) is expected to be POK (valid allocated SvPVX(sv)) */
 static char *
@@ -4494,6 +4503,18 @@ Perl_win32_init(int *argcp, char ***argvp)
 
     ansify_path();
     {
+	LONG retval;
+	retval = RegOpenKeyExW(HKEY_CURRENT_USER, L"SOFTWARE\\Perl", 0, KEY_READ, &HKCU_Perl_hnd);
+	if (retval != ERROR_SUCCESS) {
+	    HKCU_Perl_hnd = NULL;
+	}
+	retval = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Perl", 0, KEY_READ, &HKLM_Perl_hnd);
+	if (retval != ERROR_SUCCESS) {
+	    HKLM_Perl_hnd = NULL;
+	}
+    }
+
+    {
     /* set the static flag in IsShimInfrastructureDisabled to 1 to disable shims for perl.exe alone
        this makes starting cmd.exe faster */
         char * f = (char*)GetProcAddress(GetModuleHandle("kernel32.dll"), "BaseQueryModuleData");
@@ -4525,6 +4546,11 @@ Perl_win32_term(void)
     OP_REFCNT_TERM;
     PERLIO_TERM;
     MALLOC_TERM;
+    /* handles might be NULL, RegCloseKey then returns ERROR_INVALID_HANDLE
+       but no point of checking and we can't die() at this point */
+    RegCloseKey(HKLM_Perl_hnd);
+    RegCloseKey(HKCU_Perl_hnd);
+    /* the handles are in an undefined state until the next PERL_SYS_INIT3 */
 }
 
 void
