@@ -120,7 +120,7 @@ USE_LARGE_FILES	*= define
 # Visual C++ 6.x (aka Visual C++ 98)
 #CCTYPE		*= MSVC60
 # Visual C++ .NET 2002/2003 (aka Visual C++ 7.x) (full version)
-#CCTYPE		*= MSVC70
+CCTYPE		*= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.x) (free command-line tools)
 #CCTYPE		*= MSVC70FREE
 # Windows Server 2003 SP1 Platform SDK (April 2005)
@@ -146,7 +146,7 @@ USE_LARGE_FILES	*= define
 # Visual C++ 2013 Express Edition (aka Visual C++ 12.x) (free version)
 #CCTYPE		= MSVC120FREE
 # MinGW or mingw-w64 with gcc-3.4.5 or later
-CCTYPE		*= GCC
+#CCTYPE		*= GCC
 
 #
 # If you are using GCC, 4.3 or later by default we add the -fwrapv option.
@@ -181,7 +181,7 @@ CCTYPE		*= GCC
 # which causes warnings to be printed on STDERR, which in turn causes a
 # few tests to fail.)  (This configuration is only available for VC++ builds.)
 #
-#CFG		*= Debug
+CFG		*= Debug
 
 #
 # uncomment to enable linking with setargv.obj under the Visual C
@@ -263,7 +263,7 @@ CCDLLDIR *= $(CCHOME)\bin
 #
 # Additional compiler flags can be specified here.
 #
-BUILDOPT	*= $(BUILDOPTEXTRA)
+BUILDOPT	*= $(BUILDOPTEXTRA) -DDEBUG_LEAKING_SCALARS
 
 #
 # This should normally be disabled.  Enabling it will disable the File::Glob
