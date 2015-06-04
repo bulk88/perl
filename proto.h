@@ -4130,14 +4130,9 @@ PERL_CALLCONV NV	Perl_sv_2nv_flags(pTHX_ SV *const sv, const I32 flags)
 #define PERL_ARGS_ASSERT_SV_2PV	\
 	assert(sv)
 
-__forceinline char*	S_sv_2pv_flags(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
+PERL_CALLCONV char*	Perl_sv_2pv_flags(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_SV_2PV_FLAGS	\
-	assert(sv)
-
-PERL_CALLCONV __int64	Perl_sv_2pv_flags_s(pTHX_ SV *const sv, const I32 flags)
-			__attribute__nonnull__(pTHX_1);
-#define PERL_ARGS_ASSERT_SV_2PV_FLAGS_S	\
 	assert(sv)
 
 /* PERL_CALLCONV char*	Perl_sv_2pv_nolen(pTHX_ SV* sv)

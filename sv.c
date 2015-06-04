@@ -301,8 +301,6 @@ Public API:
 
 /* make some more SVs by adding another arena */
 
-__forceinline char *  Perl_sv_2pv_flags_o(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags);
-
 STATIC SV*
 S_more_sv(pTHX)
 {
@@ -2996,15 +2994,8 @@ C<sv_2pv()> and C<sv_2pv_nomg> usually end up here too.
 =cut
 */
 
-__int64
-Perl_sv_2pv_flags_s(pTHX_ SV *const sv, const I32 flags){
-    _2pv_t _2pv;
-    _2pv.pv = Perl_sv_2pv_flags_o(aTHX_ sv, &_2pv.len, flags);
-    return *(__int64 *)&_2pv;
-}
-
-__forceinline char *
-Perl_sv_2pv_flags_o(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
+char *
+Perl_sv_2pv_flags(pTHX_ SV *const sv, STRLEN *const lp, const I32 flags)
 {
     char *s;
 
