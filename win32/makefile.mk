@@ -591,9 +591,9 @@ LINK_DBG	= -debug -opt:ref,icf
 #LINK_DBG	= $(LINK_DBG) -debugtype:both
 .IF "$(CCTYPE)" != "MSVC60"
 # enable Whole Program Optimizations (WPO) and Link Time Code Generation (LTCG)
-OPTIMIZE	+= -GL
-LINK_DBG	+= -ltcg
-LIB_FLAGS	= -ltcg
+OPTIMIZE	+= 
+LINK_DBG	+= 
+LIB_FLAGS	= 
 .ENDIF
 .ENDIF
 
@@ -857,7 +857,7 @@ PERLDLL		= ..\perl523.dll
 #"dmake -n" will invoke all the make_ext.pl scripts build things instead of
 #showing what to build since $(MAKE) is an arg to make_ext.pl, not an invocation
 #of the dmake process
-PLMAKE		= dmake
+PLMAKE		= b88-dmake
 
 XCOPY		= xcopy /f /r /i /d /y
 RCOPY		= xcopy /f /r /i /e /d /y
