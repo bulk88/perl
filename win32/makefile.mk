@@ -1108,8 +1108,7 @@ regen_config_h:
 $(CONFIGPM): ..\config.sh config_h.PL
 	$(MINIPERL) -I..\lib ..\configpm --chdir=..
 	$(XCOPY) config.h $(COREDIR)\*.*
-	$(MINIPERL) -I..\lib config_h.PL "ARCHPREFIX=$(ARCHPREFIX)" \
-	    || $(PLMAKE) $(MAKEMACROS) $(CONFIGPM) $(MAKEFILE)
+	-$(MINIPERL) -I..\lib config_h.PL "ARCHPREFIX=$(ARCHPREFIX)"
 
 .\config.h : $(CONFIGPM)
 
