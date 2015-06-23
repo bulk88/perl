@@ -1687,9 +1687,8 @@ minitest : .\config.h $(HAVEMINIPERL) ..\git_version.h $(GLOBEXE) $(CONFIGPM) $(
 	cd ..\t && perl.exe TEST base/*.t comp/*.t cmd/*.t run/*.t io/*.t re/*.t opbasic/*.t op/*.t uni/*.t perf/*.t pragma/*.t
 
 test-prep : all utils ..\pod\perltoc.pod $(TESTPREPGCC)
-	$(XCOPY) $(PERLEXE) ..\t\$(NULL)
-	$(XCOPY) $(PERLDLL) ..\t\$(NULL)
-	$(XCOPY) $(GLOBEXE) ..\t\$(NULL)
+	$(XCOPY) $(PERLEXE) ..\t\$(NULL) && $(XCOPY) $(PERLDLL) ..\t\$(NULL) \
+	&& $(XCOPY) $(GLOBEXE) ..\t\$(NULL)
 
 # If building with gcc versions 4.x.x or greater, then
 # the GCC helper DLL will also need copied to the test directory.
