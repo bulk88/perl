@@ -127,9 +127,11 @@ init_Win32CORE(pTHX)
     };
     const unsigned char * len = (const unsigned char *)&fnname_lens;
     const char * function = (char *)&fnname_table;
+    PL_xsubfilename = __FILE__;
+    (void)gv_fetchfile_flags(__FILE__, sizeof(""__FILE__"")-1, 0);
     while (function < (char *)&fnname_table + sizeof(fnname_table)) {
-	const char * const file = __FILE__;
-	CV * const cv = newXS(function, w32_CORE_all, file);
+	/* why cant I use Perl_newXS_len_flags here, both are static ?*/
+	CV * const cv = Perl_newXS_deffile(aTHX_ function, w32_CORE_all);
 	XSANY.any_ptr = (void *)function;
 	function += *len++;
     }

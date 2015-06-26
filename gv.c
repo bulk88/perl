@@ -125,7 +125,16 @@ Perl_gv_fetchfile_flags(pTHX_ const char *const name, const STRLEN namelen,
     memcpy(tmpbuf + 2, name, namelen);
     gv = *(GV**)hv_fetch(PL_defstash, tmpbuf, tmplen, TRUE);
     if (!isGV(gv)) {
+	char * gvfile;
+	size_t gvfilelen;
 	gv_init(gv, PL_defstash, tmpbuf, tmplen, FALSE);
+	gvfile = HEK_KEY(GvFILE_HEK(gv));
+	gvfilelen = HEK_LEN(GvFILE_HEK(gv));
+/* make this a HEK COW  for later use by Perl_newGP */
+	if( ( namelen == gvfilelen  &&
+	    memcmp(name, gvfile , namelen) == 0))
+	    //DebugBreak();
+	    0;
 #ifdef PERL_DONT_CREATE_GVSV
 	GvSV(gv) = newSVpvn(name, namelen);
 #else

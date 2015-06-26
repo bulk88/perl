@@ -4284,6 +4284,7 @@ PP(pp_entereval)
 
     /* prepare to compile string */
 
+    /* optimize all PERLDB tests */
     if ((PERLDB_LINE || PERLDB_SAVESRC) && PL_curstash != PL_debstash)
 	save_lines(CopFILEAV(&PL_compiling), PL_parser->linestr);
     else {

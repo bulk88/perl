@@ -1092,8 +1092,11 @@ Perl_boot_core_UNIVERSAL(pTHX)
     const struct xsub_details *xsub = details;
     const struct xsub_details *end = C_ARRAY_END(details);
 
+    PL_xsubfilename = __FILE__;
+    (void)gv_fetchfile_flags(__FILE__, sizeof(""__FILE__"")-1, 0);
     do {
-	newXS_flags(xsub->name, xsub->xsub, file, xsub->proto, 0);
+	newXS_len_flags( xsub->name, strlen(xsub->name), xsub->xsub, NULL, 
+	    xsub->proto, NULL, 0);
     } while (++xsub < end);
 
 #ifndef EBCDIC
@@ -1119,7 +1122,7 @@ Perl_boot_core_UNIVERSAL(pTHX)
 	char ** cvfile = &CvFILE(cv);
 	char * oldfile = *cvfile;
 	CvDYNFILE_off(cv);
-	*cvfile = (char *)file;
+	*cvfile = (char *)__FILE__;
 	Safefree(oldfile);
     }
 }
