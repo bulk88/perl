@@ -9,7 +9,7 @@ require ExtUtils::Constant::XS;
 use ExtUtils::Constant::Utils qw(C_stringify);
 use ExtUtils::Constant::XS qw(%XS_TypeSet);
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 @ISA = 'ExtUtils::Constant::XS';
 
 %type_to_struct =
@@ -239,13 +239,19 @@ sub WriteConstants {
     if ($autoload || $croak_on_error) {
 	print $c_fh <<'EOC';
 
-/* This allows slightly more efficient code on !USE_ITHREADS: */
+/* This allows slightly more efficient code on !USE_ITHREADS on old perls */
 #ifdef USE_ITHREADS
 #  define COP_FILE(c)	CopFILE(c)
 #  define COP_FILE_F	"s"
 #else
-#  define COP_FILE(c)	CopFILESV(c)
-#  define COP_FILE_F	SVf
+/* CopFILESV is not set in newer perls */
+#  if PERL_REVISION >= 5 && PERL_VERSION >= 23 && PERL_SUBVERSION >= 1
+#    define COP_FILE(c) CopFILE(c)
+#    define COP_FILE_F  "s"
+#  else
+#    define COP_FILE(c) CopFILESV(c)
+#    define COP_FILE_F  SVf
+#  endif
 #endif
 EOC
     }
@@ -350,17 +356,19 @@ get_missing_hash(pTHX) {
     SV *const *const ref
 	= hv_fetch(parent, "$key", $key_len, TRUE);
     HV *new_hv;
+    SV *rv;
 
     if (!ref)
 	return NULL;
 
-    if (SvROK(*ref))
-	return (HV*) SvRV(*ref);
+    rv = *ref;
+    if (SvROK(rv))
+	return (HV*) SvRV(rv);
 
+    SvUPGRADE(rv, SVt_RV);
+    SvROK_on(rv);
     new_hv = newHV();
-    SvUPGRADE(*ref, SVt_RV);
-    SvRV_set(*ref, (SV *)new_hv);
-    SvROK_on(*ref);
+    SvRV_set(rv, (SV *)new_hv);
     return new_hv;
 }
 
@@ -597,6 +605,7 @@ EOBOOT
     return if !defined $xs_subname;
 
     if ($croak_on_error || $autoload) {
+        my $cop = $croak_on_error ? 'cop' : 'PL_curcop';
         print $xs_fh $croak_on_error ? <<"EOC" : <<'EOA';
 
 void
@@ -615,7 +624,6 @@ AUTOLOAD()
     PROTOTYPE: DISABLE
     PREINIT:
 	SV *sv = newSVpvn_flags(SvPVX(cv), SvCUR(cv), SVs_TEMP | SvUTF8(cv));
-	const COP *cop = PL_curcop;
 EOA
         print $xs_fh <<"EOC";
     PPCODE:
@@ -626,17 +634,20 @@ EOA
 	   function too.  */
 	HV *${c_subname}_missing = (C_ARRAY_LENGTH(values_for_notfound) > 1)
 	    ? get_missing_hash(aTHX) : NULL;
-	if ((C_ARRAY_LENGTH(values_for_notfound) > 1)
-	    ? hv_exists_ent(${c_subname}_missing, sv, 0) : 0) {
-	    sv = newSVpvf("Your vendor has not defined $package_sprintf_safe macro %" SVf
-			  ", used at %" COP_FILE_F " line %d\\n", sv,
-			  COP_FILE(cop), CopLINE(cop));
-	} else
-#endif
+	const char * fmt =
+	    ((C_ARRAY_LENGTH(values_for_notfound) > 1)
+		? hv_exists_ent(${c_subname}_missing, sv, 0) : 0)
+	    ? "Your vendor has not defined $package_sprintf_safe macro %"
+		SVf ", used at %" COP_FILE_F " line %d\\n"
+	    : "%"SVf" is not a valid $package_sprintf_safe macro at %"
+		COP_FILE_F " line %d\\n";
+	sv = newSVpvf(fmt, sv, COP_FILE($cop), CopLINE($cop));
+#else
 	{
 	    sv = newSVpvf("%"SVf" is not a valid $package_sprintf_safe macro at %"
 			  COP_FILE_F " line %d\\n", sv, COP_FILE(cop), CopLINE(cop));
 	}
+#endif
 	croak_sv(sv_2mortal(sv));
 EOC
     } else {
