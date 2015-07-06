@@ -144,7 +144,14 @@ Return the CV from the GV.
 
 #define GvLINE(gv)	(GvGP(gv)->gp_line)
 #define GvFILE_HEK(gv)	(GvGP(gv)->gp_file_hek)
-#define GvFILEx(gv)	HEK_KEY(GvFILE_HEK(gv))
+/* with threads undecorated path, with no threads HEK is "_<" prefixed (ie decorated), */
+#ifdef USE_ITHREADS
+#  define GvFILEx(gv)	    HEK_KEY(GvFILE_HEK(gv))
+#  define GvFILELENx(gv)    HEK_LEN(GvFILE_HEK(gv))
+#else
+#  define GvFILEx(gv)	    (HEK_KEY(GvFILE_HEK(gv))+2)
+#  define GvFILELENx(gv)    (HEK_LEN(GvFILE_HEK(gv))-2)
+#endif
 #define GvFILE(gv)	(GvFILE_HEK(gv) ? GvFILEx(gv) : NULL)
 #define GvFILEGV(gv)	(GvFILE_HEK(gv) ? gv_fetchfile(GvFILEx(gv)) : NULL)
 
