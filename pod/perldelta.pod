@@ -154,6 +154,10 @@ XXX
 
 =item *
 
+L<B> has been upgraded from version 1.58 to 1.59.
+
+=item *
+
 L<IPC::Open3> has been upgraded from version 1.18 to 1.19.
 
 If a Perl exception was thrown from inside this module, the exception

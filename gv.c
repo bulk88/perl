@@ -123,14 +123,47 @@ Perl_gv_fetchfile_flags(pTHX_ const char *const name, const STRLEN namelen,
     gv = *(GV**)hv_fetch(PL_defstash, tmpbuf, tmplen, TRUE);
     if (!isGV(gv)) {
 	gv_init(gv, PL_defstash, tmpbuf, tmplen, FALSE);
+        if ((PERLDB_LINE || PERLDB_SAVESRC)) {
+#ifdef USE_ITHREADS
+            HEK * file_hek = GvFILE_HEK(gv);
+/* On threads, gv_fetchfile is called by core only when perl debugger is on
+   (PERLDB_* flags). When under perl debugger, the majority of the time name
+   happens to be threaded GV's GvFILE HEK. GvFILE is different between threads
+   and unthreaded (see ML
+   "GvFILE and GvLINE origin of globs differ on threaded vs unthreaded perl").
+   The minority exception is "(eval 1234)" strings. The file paths are already
+   availble in HEK form from the GV from newGP so HEK COW the file paths. */
+            if(HEK_LEN(file_hek) == namelen
+                && memEQ(name, HEK_KEY(file_hek), HEK_LEN(file_hek))) {
 #ifdef PERL_DONT_CREATE_GVSV
-	GvSV(gv) = newSVpvn(name, namelen);
+                GvSV(gv) = newSVhek(file_hek);
 #else
-	sv_setpvn(GvSV(gv), name, namelen);
+                sv_sethek(GvSV(gv), file_hek);
 #endif
+            }
+/* Core with threads will only go down this path for "(eval 1234)" as part of
+   perl debugging. Possibly, NYTProf and Embperl will call this func with
+   filenames that arent in PL_curcop, and also take this branch */
+            else
+#endif /* ifdef USE_ITHREADS */
+#ifdef PERL_DONT_CREATE_GVSV
+                GvSV(gv) = newSVpvn(name, namelen);
+#else
+                sv_setpvn(GvSV(gv), name, namelen);
+#endif
+            /* a new GV can't have AV and HV set */
+            goto add_av_and_hv;
+        }
     }
-    if ((PERLDB_LINE || PERLDB_SAVESRC) && !GvAV(gv))
-	    hv_magic(GvHVn(gv), GvAVn(gv), PERL_MAGIC_dbfile);
+    else if ((PERLDB_LINE || PERLDB_SAVESRC) && !GvAV(gv)) {
+        if(!GvHV(gv)) {
+            add_av_and_hv: /* with a new GV these will always be NULL */
+            gv_HVadd(gv);
+        }
+        gv_AVadd(gv);
+        hv_magic(GvHV(gv), GvAV(gv), PERL_MAGIC_dbfile);
+    }
+
     if (tmpbuf != smallbuf)
 	Safefree(tmpbuf);
     return gv;
@@ -191,8 +224,10 @@ Perl_newGP(pTHX_ GV *const gv)
 #else
 	filegv = CopFILEGV(PL_curcop);
 	if (filegv) {
-	    file = GvNAME(filegv)+2;
-	    len = GvNAMELEN(filegv)-2;
+            HEK * hek = GvNAME_HEK(filegv);
+            share_hek_hek(hek);
+            gp->gp_file_hek = hek;
+            goto gp_file_hek_done;
 	}
 #endif
 	else goto no_file;
@@ -202,11 +237,13 @@ Perl_newGP(pTHX_ GV *const gv)
 	file = "";
 	len = 0;
     }
-
     PERL_HASH(hash, file, len);
     gp->gp_file_hek = share_hek(file, len, hash);
-    gp->gp_refcnt = 1;
 
+#ifndef USE_ITHREADS
+    gp_file_hek_done:
+#endif
+    gp->gp_refcnt = 1;
     return gp;
 }
 
@@ -2437,13 +2474,13 @@ Perl_gv_check(pTHX_ HV *stash)
 		gv = MUTABLE_GV(HeVAL(entry));
 		if (SvTYPE(gv) != SVt_PVGV || GvMULTI(gv))
 		    continue;
-		file = GvFILE(gv);
 		CopLINE_set(PL_curcop, GvLINE(gv));
+		file = GvFILEx(gv);
 #ifdef USE_ITHREADS
 		CopFILE(PL_curcop) = (char *)file;	/* set for warning */
 #else
 		CopFILEGV(PL_curcop)
-		    = gv_fetchfile_flags(file, HEK_LEN(GvFILE_HEK(gv)), 0);
+		    = gv_fetchfile_flags(file, GvFILELENx(gv), 0);
 #endif
 		Perl_warner(aTHX_ packWARN(WARN_ONCE),
 			"Name \"%"HEKf"::%"HEKf

@@ -1961,6 +1961,7 @@ BmRARE(sv)
 
 MODULE = B	PACKAGE = B::GV		PREFIX = Gv
 
+#ifdef USE_ITHREADS
 void
 GvNAME(gv)
 	B::GV	gv
@@ -1971,6 +1972,27 @@ GvNAME(gv)
 	ST(0) = sv_2mortal(newSVhek(!ix ? GvNAME_HEK(gv)
 					: (ix == 1 ? GvFILE_HEK(gv)
 						   : HvNAME_HEK((HV *)gv))));
+
+#else
+
+void
+GvNAME(gv)
+	B::GV	gv
+    ALIAS:
+	B::HV::NAME = 1
+    CODE:
+	ST(0) = sv_2mortal(newSVhek(!ix ? GvNAME_HEK(gv) : HvNAME_HEK((HV *)gv)));
+
+# GvFILE_HEK contains a "_<" prefixed HEK on unthreaded
+
+void
+GvFILE(gv)
+	B::GV	gv
+    CODE:
+	ST(0) = newSVpvn_flags(GvFILEx(gv), GvFILELENx(gv),
+	    SVs_TEMP | SVf_UTF8 * !!HEK_UTF8(GvFILE_HEK(gv)));
+
+#endif
 
 bool
 is_empty(gv)
