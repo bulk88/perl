@@ -1594,7 +1594,7 @@ MODULE = B	PACKAGE = B::IV
 #else
 # define PVCV_gv_ix	sv_SVp | STRUCT_OFFSET(struct xpvcv, xcv_gv)
 #endif
-#define PVCV_file_ix	sv_char_pp | STRUCT_OFFSET(struct xpvcv, xcv_file)
+# /* #define PVCV_file_ix	sv_char_pp | STRUCT_OFFSET(struct xpvcv, xcv_file) */
 #define PVCV_outside_ix	sv_SVp | STRUCT_OFFSET(struct xpvcv, xcv_outside)
 #define PVCV_outside_seq_ix sv_U32p | STRUCT_OFFSET(struct xpvcv, xcv_outside_seq)
 #define PVCV_flags_ix	sv_U32p | STRUCT_OFFSET(struct xpvcv, xcv_flags)
@@ -1641,7 +1641,7 @@ IVX(sv)
 	B::IO::IoFLAGS = PVIO_flags_ix
 	B::AV::MAX = PVAV_max_ix
 	B::CV::STASH = PVCV_stash_ix
-	B::CV::FILE = PVCV_file_ix
+#	B::CV::FILE = PVCV_file_ix
 	B::CV::OUTSIDE = PVCV_outside_ix
 	B::CV::OUTSIDE_SEQ = PVCV_outside_seq_ix
 	B::CV::CvFLAGS = PVCV_flags_ix

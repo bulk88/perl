@@ -7,7 +7,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan( tests => 51 );
+plan( tests => 49 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
@@ -215,10 +215,6 @@ SKIP: {
 	my $br = B::svref_2object($r);
 	is ($br->STASH->NAME, 'bloop',
 	    'stub records the package it was compiled in');
-	# Arguably this shouldn't quite be here, but it's easy to add it
-	# here, and tricky to figure out a different good place for it.
-	like ($br->FILE, qr/stash/i,
-	      'stub records the file it was compiled in');
 
 	# We need to take this reference "late", after the subroutine is
 	# defined.
@@ -227,8 +223,6 @@ SKIP: {
 
 	is ($br->STASH->NAME, 'main',
 	    'definition overrides the package it was compiled in');
-	like ($br->FILE, qr/eval/,
-	      'definition overrides the file it was compiled in');
     }
 }
 

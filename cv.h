@@ -52,6 +52,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvGV(sv)	S_CvGV(aTHX_ (CV *)(sv))
 #define CvGV_set(cv,gv)	Perl_cvgv_set(aTHX_ cv, gv)
 #define CvHASGV(cv)	cBOOL(SvANY(cv)->xcv_gv_u.xcv_gv)
+/*
 #define CvFILE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_file
 #ifdef USE_ITHREADS
 #  define CvFILE_set_from_cop(sv, cop)	\
@@ -61,6 +62,7 @@ See L<perlguts/Autoloading with XSUBs>.
     (CvFILE(sv) = CopFILE(cop), CvDYNFILE_off(sv))
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
+*/
 #define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
 /* For use when you only have a XPVCV*, not a real CV*.
    Must be assert protected as in S_CvDEPTHp before use. */
@@ -129,7 +131,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #ifdef PERL_CORE
 # define CVf_SLABBED	0x0800	/* Holds refcount on op slab  */
 #endif
-#define CVf_DYNFILE	0x1000	/* The filename isn't static  */
+/*# define CVf_DYNFILE	0x1000	/* The filename isn't static  */
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
 #define CVf_HASEVAL	0x4000	/* contains string eval  */
 #define CVf_NAMED	0x8000  /* Has a name HEK */
@@ -200,9 +202,11 @@ See L<perlguts/Autoloading with XSUBs>.
 # define CvSLABBED_off(cv)	(CvFLAGS(cv) &= ~CVf_SLABBED)
 #endif
 
+/*
 #define CvDYNFILE(cv)		(CvFLAGS(cv) & CVf_DYNFILE)
 #define CvDYNFILE_on(cv)	(CvFLAGS(cv) |= CVf_DYNFILE)
 #define CvDYNFILE_off(cv)	(CvFLAGS(cv) &= ~CVf_DYNFILE)
+*/
 
 #define CvAUTOLOAD(cv)		(CvFLAGS(cv) & CVf_AUTOLOAD)
 #define CvAUTOLOAD_on(cv)	(CvFLAGS(cv) |= CVf_AUTOLOAD)

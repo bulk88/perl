@@ -46,7 +46,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
         MDEREF_SHIFT
     );
 
-$VERSION = '1.35';
+$VERSION = '1.36';
 use strict;
 use vars qw/$AUTOLOAD/;
 use warnings ();
@@ -477,7 +477,9 @@ sub null {
 sub todo {
     my $self = shift;
     my($cv, $is_form, $name) = @_;
-    my $cvfile = $cv->FILE//'';
+    #if this a CVf_NAMED CV, GV is being reified on the next line
+    #and GV's GP's FILE is Deparse.pm :-(
+    my $cvfile = $cv->GV->FILE//'';
     return unless ($cvfile eq $0 || exists $self->{files}{$cvfile});
     my $seq;
     if ($cv->OUTSIDE_SEQ) {

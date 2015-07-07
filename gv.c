@@ -612,7 +612,7 @@ S_maybe_add_coresub(pTHX_ HV * const stash, GV *gv,
     /* XSUBs can't be perl lang/perl5db.pl debugged
     if (PERLDB_LINE || PERLDB_SAVESRC)
         (void)gv_fetchfile(file); */
-    CvFILE(cv) = (char *)file;
+/*    CvFILE(cv) = (char *)file; */
     /* XXX This is inefficient, as doing things this order causes
            a prototype check in newATTRSUB.  But we have to do
            it this order as we need an op number before calling
