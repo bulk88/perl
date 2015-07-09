@@ -373,9 +373,9 @@ string/length pair.
  */
 
 /* STR_WITH_LEN() shortcuts */
-#define newSVpvs(str) Perl_newSVpvn(aTHX_ STR_WITH_LEN(str))
+#define newSVpvs(str) Perl_newSVpvsn(aTHX_ STR_WITH_LEN(str))
 #define newSVpvs_flags(str,flags)	\
-    Perl_newSVpvn_flags(aTHX_ STR_WITH_LEN(str), flags)
+    Perl_newSVpvsn_flags(aTHX_ STR_WITH_LEN(str), flags)
 #define newSVpvs_share(str) Perl_newSVpvn_share(aTHX_ STR_WITH_LEN(str), 0)
 #define sv_catpvs_flags(sv, str, flags) \
     Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), flags)

@@ -4982,8 +4982,8 @@ Perl_sv_setpvsn(pTHX_ SV *const sv, const char *const ptr, const STRLEN len)
 		     to be a fancy SvCUR_set(sv, 0), plus it will probably
 		     soon use the buffer, Perl_yysomething crashes if you
 		     free the PV */
-	sv_setpvn(sv, ptr, len);
-	return;
+	//sv_setpvn(sv, ptr, len);
+	//return;
     }
     else {
 	/* len is STRLEN which is unsigned, need to copy to signed */
@@ -9152,6 +9152,25 @@ Perl_newSVpvn_flags(pTHX_ const char *const s, const STRLEN len, const U32 flags
     return sv;
 }
 
+
+SV *
+Perl_newSVpvsn_flags(pTHX_ const char *const s, const STRLEN len, const U32 flags)
+{
+    SV *sv;
+
+    assert(!(flags & ~(SVf_UTF8|SVs_TEMP)));
+    new_SV(sv);
+    sv_setpvsn(sv,s,len);
+
+    SvFLAGS(sv) |= flags;
+
+    if(flags & SVs_TEMP){
+	PUSH_EXTEND_MORTAL__SV_C(sv);
+    }
+
+    return sv;
+}
+
 /*
 =for apidoc sv_2mortal
 
@@ -9220,6 +9239,15 @@ Perl_newSVpvn(pTHX_ const char *const buffer, const STRLEN len)
     SV *sv;
     new_SV(sv);
     sv_setpvn(sv,buffer,len);
+    return sv;
+}
+
+SV *
+Perl_newSVpvsn(pTHX_ const char *const buffer, const STRLEN len)
+{
+    SV *sv;
+    new_SV(sv);
+    sv_setpvsn(sv,buffer,len);
     return sv;
 }
 

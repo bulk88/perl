@@ -4727,7 +4727,9 @@ Perl_yylex(pTHX)
 	    if (PL_parser->in_pod) {
 		/* Incest with pod. */
 		if (*s == '=' && strnEQ(s, "=cut", 4) && !isALPHA(s[4])) {
-		    sv_setpvs(PL_linestr, "");
+		    assert(SvTYPE(PL_linestr) >= SVt_PV && SvPOK(PL_linestr));
+		    SvCUR_set(PL_linestr, 0);/*infinite loop parsing "=cut" otherwise, both required*/
+		    *SvPVX(PL_linestr) = '\0'; 
 		    PL_oldoldbufptr = PL_oldbufptr = s = PL_linestart = SvPVX(PL_linestr);
 		    PL_bufend = SvPVX(PL_linestr) + SvCUR(PL_linestr);
 		    PL_last_lop = PL_last_uni = NULL;
@@ -9275,7 +9277,7 @@ S_scan_heredoc(pTHX_ char *s)
       len--;
       linestr_save = PL_linestr; /* must restore this afterwards */
       d = s;			 /* and this */
-      PL_linestr = newSVpvs("");
+      PL_linestr = newSVpvn("", 0);
       PL_bufend = SvPVX(PL_linestr);
       while (1) {
 	PL_bufptr = PL_bufend;

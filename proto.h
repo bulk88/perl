@@ -3117,6 +3117,14 @@ PERL_CALLCONV SV*	Perl_newSVpvn_share(pTHX_ const char* s, I32 len, U32 hash)
 			__attribute__malloc__
 			__attribute__warn_unused_result__;
 
+PERL_CALLCONV SV*	Perl_newSVpvsn(pTHX_ const char *const s, const STRLEN len)
+			__attribute__malloc__
+			__attribute__warn_unused_result__;
+
+PERL_CALLCONV SV*	Perl_newSVpvsn_flags(pTHX_ const char *const s, const STRLEN len, const U32 flags)
+			__attribute__malloc__
+			__attribute__warn_unused_result__;
+
 PERL_CALLCONV SV*	Perl_newSVrv(pTHX_ SV *const rv, const char *const classname)
 			__attribute__nonnull__(pTHX_1);
 #define PERL_ARGS_ASSERT_NEWSVRV	\

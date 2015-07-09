@@ -697,12 +697,14 @@ Perl_magic_regdatum_set(pTHX_ SV *sv, MAGIC *mg)
 
 #define SvRTRIM(sv) STMT_START { \
     if (SvPOK(sv)) { \
-        STRLEN len = SvCUR(sv); \
-        char * const p = SvPVX(sv); \
-	while (len > 0 && isSPACE(p[len-1])) \
-	   --len; \
-	SvCUR_set(sv, len); \
-	p[len] = '\0'; \
+	STRLEN len = SvCUR(sv); \
+	if(len > 0) { \
+	    char * const p = SvPVX(sv); \
+	    while (len > 0 && isSPACE(p[len-1])) \
+		--len; \
+	    SvCUR_set(sv, len); \
+	    p[len] = '\0'; \
+	} \
     } \
 } STMT_END
 
@@ -938,7 +940,6 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
             }
             RESTORE_ERRNO;
 	}
-
 	SvRTRIM(sv);
 	SvNOK_on(sv);	/* what a wonderful hack! */
 	break;

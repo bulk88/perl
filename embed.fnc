@@ -1023,7 +1023,9 @@ Apda	|SV*	|newSVuv	|const UV u
 Apda	|SV*	|newSVnv	|const NV n
 Apda	|SV*	|newSVpv	|NULLOK const char *const s|const STRLEN len
 Apda	|SV*	|newSVpvn	|NULLOK const char *const s|const STRLEN len
+Xpa	|SV*	|newSVpvsn	|NULLOK const char *const s|const STRLEN len
 Apda	|SV*	|newSVpvn_flags	|NULLOK const char *const s|const STRLEN len|const U32 flags
+Xpa	|SV*	|newSVpvsn_flags|NULLOK const char *const s|const STRLEN len|const U32 flags
 Apda	|SV*	|newSVhek	|NULLOK const HEK *const hek
 Apda	|SV*	|newSVpvn_share	|NULLOK const char* s|I32 len|U32 hash
 Apda	|SV*	|newSVpv_share	|NULLOK const char* s|U32 hash

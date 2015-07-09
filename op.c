@@ -10205,8 +10205,8 @@ Perl_ck_glob(pTHX_ OP *o)
 #if !defined(PERL_EXTERNAL_GLOB)
     if (!PL_globhook) {
 	ENTER;
-	Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT,
-			       newSVpvs("File::Glob"), NULL, NULL, NULL);
+	Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, /* using slash to avoid "::" fixup in ck_require */
+			       newSVpvs("File/Glob"), NULL, NULL, NULL);
 	LEAVE;
     }
 #endif /* !PERL_EXTERNAL_GLOB */

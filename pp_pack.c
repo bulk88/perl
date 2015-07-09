@@ -2690,6 +2690,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
                     cur = S_bytes_to_uni(buffer, endb-buffer, cur, 0);
 		} else {
 		    if (cur >= end) {
+			char * file = CopFILE(PL_curcop);
 			*cur = '\0';
 			SvCUR_set(cat, cur - start);
 			GROWING(0, cat, start, cur, len+UTF8_MAXLEN);
@@ -3138,8 +3139,8 @@ PP(pp_pack)
     const char *patend = pat + fromlen;
 
     MARK++;
-    sv_setpvs(cat, "");
-    SvUTF8_off(cat);
+    sv_setpvn(cat, NULL, 0);
+//    SvUTF8_off(cat);
 
     packlist(cat, pat, patend, MARK, SP + 1);
 
