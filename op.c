@@ -8698,7 +8698,7 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
 	    if (CvFILE(cv) && CvDYNFILE(cv)) {
 		Safefree(CvFILE(cv));
     }
-	    CvFILE_set_from_cop(cv, PL_curcop);
+	    //CvFILE_set_from_cop(cv, PL_curcop);
 	    CvSTASH_set(cv, PL_curstash);
 
 	    /* inner references to PL_compcv must be fixed up ... */
@@ -8774,6 +8774,22 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
     slab = (OPSLAB *)CvSTART(cv);
 #endif
     CvSTART(cv) = start;
+    {
+        COP * startcop = (COP*) start;
+        //assert(startcop->op_type == OP_NEXTSTATE);
+	//if Perl_pmruntime is the caller of Perl_newATTRSUB_x, OP * start is a pp_qr not a pp_nextstate
+  //do {
+  //  # In pre-5.9.5 world we have to do dirty tricks.
+  //  # (we use 'our' rather than 'my' here, due to the rather complex and buggy
+  //  # behaviour of lexicals with qr// and (??{$lex}) )
+  //  our $trick1; # yes, cannot our and assign at the same time.
+  //  $trick1 = qr{ \( (?: (?> [^()]+ ) | (??{ $trick1 }) )* \) }x;
+  //  our $trick2 = qr{ (?> (?! \d) \w+ (?:$trick1)? ) (?:\s*\:\s*|\s+(?!\:)) }x;
+  //  qr{ \s* : \s* (?: $trick2 )* }x;
+  //};
+	if(startcop->op_type == OP_NEXTSTATE)
+	    CvFILE_set_from_cop(cv, startcop);
+    }
     CALL_PEEP(start);
     finalize_optree(CvROOT(cv));
     S_prune_chain_head(&CvSTART(cv));
@@ -9170,7 +9186,12 @@ Perl_newSTUB(pTHX_ GV *gv, bool fake)
     }
     else cvgv = gv;
     CvGV_set(cv, cvgv);
-    CvFILE_set_from_cop(cv, PL_curcop);
+//    CvFILE_set_from_cop(cv, PL_curcop); //DYNFILE here?
+
+    assert(!CvDYNFILE(cv));
+    CvFILE(cv) = savepv(CopFILE(PL_curcop));
+    CvDYNFILE_on(cv);
+
     CvSTASH_set(cv, PL_curstash);
     GvMULTI_on(gv);
     return cv;
