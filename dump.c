@@ -1345,7 +1345,7 @@ const struct flag_to_name cv_flags_names[] = {
     {CVf_METHOD, "METHOD,"},
     {CVf_WEAKOUTSIDE, "WEAKOUTSIDE,"},
     {CVf_CVGV_RC, "CVGV_RC,"},
-    {CVf_DYNFILE, "DYNFILE,"},
+/*    {CVf_DYNFILE, "DYNFILE,"}, */
     {CVf_AUTOLOAD, "AUTOLOAD,"},
     {CVf_HASEVAL, "HASEVAL,"},
     {CVf_SLABBED, "SLABBED,"},
@@ -1960,7 +1960,7 @@ Perl_do_sv_dump(pTHX_ I32 level, PerlIO *file, SV *sv, I32 nest, I32 maxnest, bo
 	    Perl_dump_indent(aTHX_ level, file, "  NAME = \"%s\"\n",
 				   HEK_KEY(CvNAME_HEK((CV *)sv)));
 	else do_gvgv_dump(level, file, "  GVGV::GV", CvGV(sv));
-	Perl_dump_indent(aTHX_ level, file, "  FILE = \"%s\"\n", CvFILE(sv));
+/*	Perl_dump_indent(aTHX_ level, file, "  FILE = \"%s\"\n", CvFILE(sv)); */
 	Perl_dump_indent(aTHX_ level, file, "  DEPTH = %"IVdf"\n", (IV)CvDEPTH(sv));
 	Perl_dump_indent(aTHX_ level, file, "  FLAGS = 0x%"UVxf"\n", (UV)CvFLAGS(sv));
 	Perl_dump_indent(aTHX_ level, file, "  OUTSIDE_SEQ = %"UVuf"\n", (UV)CvOUTSIDE_SEQ(sv));

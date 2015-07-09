@@ -573,7 +573,7 @@ S_maybe_add_coresub(pTHX_ HV * const stash, GV *gv,
     CvGV_set(cv, gv); /* This stops new ATTRSUB from setting CvFILE
                          from PL_curcop. */
     (void)gv_fetchfile(file);
-    CvFILE(cv) = (char *)file;
+/*    CvFILE(cv) = (char *)file; */
     /* XXX This is inefficient, as doing things this order causes
            a prototype check in newATTRSUB.  But we have to do
            it this order as we need an op number before calling

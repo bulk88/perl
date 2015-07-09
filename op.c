@@ -8187,7 +8187,7 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 	}
 	else {
 	    cv = MUTABLE_CV(newSV_type(SVt_PVCV));
-	    CvFILE_set_from_cop(cv, PL_curcop);
+	    /* CvFILE_set_from_cop(cv, PL_curcop); */
 	    CvSTASH_set(cv, PL_curstash);
 	    *spot = cv;
 	}
@@ -8240,9 +8240,11 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
 	    CvFLAGS(compcv) &= ~(CVf_SLABBED|CVf_WEAKOUTSIDE);
 	    CvFLAGS(compcv) |= other_flags;
 
+/*
 	    if (CvFILE(cv) && CvDYNFILE(cv)) {
 		Safefree(CvFILE(cv));
 	    }
+*/
 
 	    /* inner references to compcv must be fixed up ... */
 	    pad_fixup_inner_anons(CvPADLIST(cv), compcv, cv);
@@ -8277,7 +8279,7 @@ Perl_newMYSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs, OP *block)
     }
     if (const_sv) goto clone;
 
-    CvFILE_set_from_cop(cv, PL_curcop);
+    /*CvFILE_set_from_cop(cv, PL_curcop);*/
     CvSTASH_set(cv, PL_curstash);
 
     if (ps) {
@@ -8695,10 +8697,12 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
 	    CvFLAGS(PL_compcv) &= ~(CVf_SLABBED|CVf_WEAKOUTSIDE);
 	    CvFLAGS(PL_compcv) |= other_flags;
 
+/*  
 	    if (CvFILE(cv) && CvDYNFILE(cv)) {
 		Safefree(CvFILE(cv));
     }
 	    CvFILE_set_from_cop(cv, PL_curcop);
+*/
 	    CvSTASH_set(cv, PL_curstash);
 
 	    /* inner references to PL_compcv must be fixed up ... */
@@ -8745,7 +8749,9 @@ Perl_newATTRSUB_x(pTHX_ I32 floor, OP *o, OP *proto, OP *attrs,
 					    :  (SSize_t)namlen,
 					 hash));
 	}
+/*
 	CvFILE_set_from_cop(cv, PL_curcop);
+*/
 	CvSTASH_set(cv, PL_curstash);
     }
 
@@ -9119,20 +9125,23 @@ Perl_newXS_len_flags(pTHX_ const char *name, STRLEN len,
         }
 
         CvGV_set(cv, gv);
-        if(filename) {
-            (void)gv_fetchfile(filename);
-            assert(!CvDYNFILE(cv)); /* cv_undef should have turned it off */
-            if (flags & XS_DYNAMIC_FILENAME) {
-                CvDYNFILE_on(cv);
-                CvFILE(cv) = savepv(filename);
-            } else {
-            /* NOTE: not copied, as it is expected to be an external constant string */
-                CvFILE(cv) = (char *)filename;
-            }
-        } else {
-            assert((flags & XS_DYNAMIC_FILENAME) == 0 && PL_xsubfilename);
-            CvFILE(cv) = (char*)PL_xsubfilename;
-        }
+        //if(filename) {
+        //    /* XSUBs can't be perl lang/perl5db.pl debugged
+        //    if (PERLDB_LINE || PERLDB_SAVESRC)
+        //        (void)gv_fetchfile(filename); */
+        //    assert(!CvDYNFILE(cv)); /* cv_undef should have turned it off */
+        //    if (flags & XS_DYNAMIC_FILENAME) {
+        //        CvDYNFILE_on(cv);
+        //        CvFILE(cv) = savepv(filename);
+        //    } else {
+        //    /* NOTE: not copied, as it is expected to be an external constant string */
+        //        CvFILE(cv) = (char *)filename;
+        //    }
+        //} else {
+        //    assert((flags & XS_DYNAMIC_FILENAME) == 0 && PL_xsubfilename);
+        //    CvFILE(cv) = (char*)PL_xsubfilename;
+        //}
+
         CvISXSUB_on(cv);
         CvXSUB(cv) = subaddr;
 #ifndef PERL_IMPLICIT_CONTEXT
@@ -9170,7 +9179,9 @@ Perl_newSTUB(pTHX_ GV *gv, bool fake)
     }
     else cvgv = gv;
     CvGV_set(cv, cvgv);
+/*
     CvFILE_set_from_cop(cv, PL_curcop);
+*/
     CvSTASH_set(cv, PL_curstash);
     GvMULTI_on(gv);
     return cv;
@@ -9213,7 +9224,9 @@ Perl_newFORM(pTHX_ I32 floor, OP *o, OP *block)
     cv = PL_compcv;
     GvFORM(gv) = (CV *)SvREFCNT_inc_simple_NN(cv);
     CvGV_set(cv, gv);
+/*
     CvFILE_set_from_cop(cv, PL_curcop);
+*/
 
 
     pad_tidy(padtidy_FORMAT);

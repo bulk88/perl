@@ -2144,6 +2144,22 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
     assert (!TAINT_get);
     init_perllib();
 
+    CopFILE_free(PL_curcop); /* this should be asserted NULL here and the free removed */
+    CopFILE_set(PL_curcop, "perl.c"); /* register perma-XSUBs's GVs as being from core, not -e or initial script */
+
+    boot_core_PerlIO();
+    boot_core_UNIVERSAL();
+    boot_core_mro();
+    newXS("Internals::V", S_Internals_V, __FILE__);
+
+    if (xsinit)
+	(*xsinit)(aTHX);	/* in case linked C routines want magical variables */
+#ifndef PERL_MICRO
+#if defined(VMS) || defined(WIN32) || defined(DJGPP) || defined(__CYGWIN__) || defined(SYMBIAN)
+    init_os_extras();
+#endif
+#endif
+
     {
 	bool suidscript = FALSE;
 
@@ -2192,19 +2208,6 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
     CvPADLIST_set(PL_compcv, pad_new(0));
 
     PL_isarev = newHV();
-
-    boot_core_PerlIO();
-    boot_core_UNIVERSAL();
-    boot_core_mro();
-    newXS("Internals::V", S_Internals_V, __FILE__);
-
-    if (xsinit)
-	(*xsinit)(aTHX);	/* in case linked C routines want magical variables */
-#ifndef PERL_MICRO
-#if defined(VMS) || defined(WIN32) || defined(DJGPP) || defined(__CYGWIN__) || defined(SYMBIAN)
-    init_os_extras();
-#endif
-#endif
 
 #ifdef USE_SOCKS
 #   ifdef HAS_SOCKS5_INIT

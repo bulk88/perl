@@ -13,7 +13,7 @@ BEGIN {
 use utf8;
 use open qw( :utf8 :std );
 
-plan( tests => 49 );
+plan( tests => 48 );
 
 #These come from op/my_stash.t
 {
@@ -208,8 +208,6 @@ plan( tests => 49 );
     
             is ($br->STASH->NAME, 'main',
                 'definition overrides the package it was compiled in');
-            like ($br->FILE, qr/eval/,
-                'definition overrides the file it was compiled in');
         }
     }
     

@@ -316,12 +316,14 @@ Perl_cv_undef_flags(pTHX_ CV *cv, U32 flags)
 	    PTR2UV(cv), PTR2UV(PL_comppad))
     );
 
+/*
     if (CvFILE(&cvbody)) {
 	char * file = CvFILE(&cvbody);
 	CvFILE(&cvbody) = NULL;
 	if(CvDYNFILE(&cvbody))
 	    Safefree(file);
     }
+*/
 
     /* CvSLABBED_off(&cvbody); *//* turned off below */
     /* release the sub's body */
@@ -2270,8 +2272,11 @@ S_cv_clone(pTHX_ CV *proto, CV *cv, CV *outside, HV *cloned)
 				    |CVf_SLABBED);
     CvCLONED_on(cv);
 
+/*
     CvFILE(cv)		= CvDYNFILE(proto) ? savepv(CvFILE(proto))
 					   : CvFILE(proto);
+*/
+
     if (CvNAMED(proto))
 	 CvNAME_HEK_set(cv, share_hek_hek(CvNAME_HEK(proto)));
     else CvGV_set(cv,CvGV(proto));

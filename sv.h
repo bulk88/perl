@@ -585,7 +585,6 @@ typedef U32 cv_flags_t;
 	GV *	xcv_gv;							\
 	HEK *	xcv_hek;						\
     }		xcv_gv_u;						\
-    char *	xcv_file;							\
     union {									\
 	PADLIST *	xcv_padlist;						\
 	void *		xcv_hscxt;						\

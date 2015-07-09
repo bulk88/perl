@@ -298,19 +298,18 @@ do_test('reference to anon sub with empty prototype',
   RV = $ADDR
   SV = PVCV\\($ADDR\\) at $ADDR
     REFCNT = 2
-    FLAGS = \\($PADMY,POK,pPOK,ANON,WEAKOUTSIDE,CVGV_RC\\) # $] < 5.015 || !thr
-    FLAGS = \\($PADMY,POK,pPOK,ANON,WEAKOUTSIDE,CVGV_RC,DYNFILE\\) # $] >= 5.015 && thr
+    FLAGS = \\($PADMY,POK,pPOK,ANON,WEAKOUTSIDE,CVGV_RC\\) # $] < 5.015 || !thr || $] >= 5.023001
+    FLAGS = \\($PADMY,POK,pPOK,ANON,WEAKOUTSIDE,CVGV_RC,DYNFILE\\) # $] >= 5.015 && thr && $] < 5.023001
     PROTOTYPE = ""
     COMP_STASH = $ADDR\\t"main"
     START = $ADDR ===> \\d+
     ROOT = $ADDR
     GVGV::GV = $ADDR\\t"main" :: "__ANON__[^"]*"
-    FILE = ".*\\b(?i:peek\\.t)"
     DEPTH = 0(?:
     MUTEXP = $ADDR
     OWNER = $ADDR)?
-    FLAGS = 0x490				# $] < 5.015 || !thr
-    FLAGS = 0x1490				# $] >= 5.015 && thr
+    FLAGS = 0x490				# $] < 5.015 || !thr || $] >= 5.023001
+    FLAGS = 0x1490				# $] >= 5.015 && thr && $] < 5.023001
     OUTSIDE_SEQ = \\d+
     PADLIST = $ADDR
     PADNAME = $ADDR\\($ADDR\\) PAD = $ADDR\\($ADDR\\)
@@ -324,14 +323,13 @@ do_test('reference to named subroutine without prototype',
   RV = $ADDR
   SV = PVCV\\($ADDR\\) at $ADDR
     REFCNT = (3|4)
-    FLAGS = \\((?:HASEVAL(?:,NAMED)?)?\\)	# $] < 5.015 || !thr
-    FLAGS = \\(DYNFILE(?:,HASEVAL(?:,NAMED)?)?\\) # $] >= 5.015 && thr
+    FLAGS = \\((?:HASEVAL(?:,NAMED)?)?\\)	# $] < 5.015 || !thr || $] >= 5.023001
+    FLAGS = \\(DYNFILE(?:,HASEVAL(?:,NAMED)?)?\\) # $] >= 5.015 && $] < 5.023001 && thr
     COMP_STASH = $ADDR\\t"main"
     START = $ADDR ===> \\d+
     ROOT = $ADDR
     NAME = "do_test"				# $] >=5.021004
     GVGV::GV = $ADDR\\t"main" :: "do_test"	# $] < 5.021004
-    FILE = ".*\\b(?i:peek\\.t)"
     DEPTH = 1(?:
     MUTEXP = $ADDR
     OWNER = $ADDR)?
@@ -664,8 +662,8 @@ do_test('constant subroutine',
   RV = $ADDR
   SV = PVCV\\($ADDR\\) at $ADDR
     REFCNT = (2)
-    FLAGS = \\(POK,pPOK,CONST,ISXSUB\\)		# $] < 5.015
-    FLAGS = \\(POK,pPOK,CONST,DYNFILE,ISXSUB\\)	# $] >= 5.015
+    FLAGS = \\(POK,pPOK,CONST,ISXSUB\\)		# $] < 5.015 || $] >= 5.023001
+    FLAGS = \\(POK,pPOK,CONST,DYNFILE,ISXSUB\\)	# $] >= 5.015 && $] < 5.023001
     PROTOTYPE = ""
     COMP_STASH = 0x0				# $] < 5.021004
     COMP_STASH = $ADDR	"main"			# $] >=5.021004
@@ -680,13 +678,12 @@ do_test('constant subroutine',
       LEN = \\d+
       COW_REFCNT = 0
     GVGV::GV = $ADDR\\t"main" :: "const"
-    FILE = ".*\\b(?i:peek\\.t)"
     DEPTH = 0(?:
     MUTEXP = $ADDR
     OWNER = $ADDR)?
     FLAGS = 0xc00				# $] < 5.013
-    FLAGS = 0xc					# $] >= 5.013 && $] < 5.015
-    FLAGS = 0x100c				# $] >= 5.015
+    FLAGS = 0xc					# ($] >= 5.013 && $] < 5.015) || $] >= 5.023001
+    FLAGS = 0x100c				# $] >= 5.015 && $] < 5.023001
     OUTSIDE_SEQ = 0
     PADLIST = 0x0				# $] < 5.021006
     HSCXT = $ADDR				# $] >= 5.021006
@@ -734,19 +731,18 @@ do_test('FORMAT',
   RV = $ADDR
   SV = PVFM\\($ADDR\\) at $ADDR
     REFCNT = 2
-    FLAGS = \\(\\)				# $] < 5.015 || !thr
-    FLAGS = \\(DYNFILE\\)			# $] >= 5.015 && thr
+    FLAGS = \\(\\)				# $] < 5.015 || !thr || $] >= 5.023001
+    FLAGS = \\(DYNFILE\\)			# $] >= 5.015 && thr && $] < 5.023001
 (?:    PV = 0
 )?    COMP_STASH = 0x0
     START = $ADDR ===> \\d+
     ROOT = $ADDR
-    GVGV::GV = $ADDR\\t"main" :: "PIE"
-    FILE = ".*\\b(?i:peek\\.t)"(?:
+    GVGV::GV = $ADDR\\t"main" :: "PIE"(?:
     DEPTH = 0)?(?:
     MUTEXP = $ADDR
     OWNER = $ADDR)?
-    FLAGS = 0x0					# $] < 5.015 || !thr
-    FLAGS = 0x1000				# $] >= 5.015 && thr
+    FLAGS = 0x0					# $] < 5.015 || !thr || $] >= 5.023001
+    FLAGS = 0x1000				# $] >= 5.015 && thr && $] < 5.023001
     OUTSIDE_SEQ = \\d+
     LINES = 0					# $] < 5.017_003
     PADLIST = $ADDR
