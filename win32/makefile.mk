@@ -1457,18 +1457,21 @@ $(PERLEXESTATIC): $(PERLSTATICLIB) $(CONFIGPM) $(PERLEXEST_OBJ) $(PERLEXE_RES)
 # DynaLoader.pm, so this will have to do
 
 #most of deps of this target are in DYNALOADER and therefore omitted here
-Extensions : $(PERLDEP) $(DYNALOADER) $(GLOBEXE) $(UNIDATAFILES)
+Extensions : $(PERLDEP) $(DYNALOADER) $(GLOBEXE) $(UNIDATAFILES) Extensions_nonxsbasic
 	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --dynamic
 
 Extensions_reonly : $(PERLDEP) $(DYNALOADER)
 	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --dynamic +re
 
-Extensions_static : ..\make_ext.pl list_static_libs.pl $(CONFIGPM) $(GLOBEXE) $(HAVE_COREDIR)
+Extensions_static : list_static_libs.pl $(HAVE_COREDIR)
 	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --static
 	$(MINIPERL) -I..\lib list_static_libs.pl > Extensions_static
 
-Extensions_nonxs : ..\make_ext.pl ..\pod\perlfunc.pod $(CONFIGPM) $(GLOBEXE)
-	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --nonxs !libs
+Extensions_nonxs : ..\pod\perlfunc.pod Extensions_nonxsbasic
+	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --nonxs !libs !cpan/AutoLoader !dist/Carp !cpan/ExtUtils-Install !cpan/ExtUtils-MakeMaker !cpan/ExtUtils-Manifest !cpan/File-Path !dist/Term-ReadLine !dist/Exporter !ext/File-Find !cpan/Text-Tabs !dist/constant !cpan/Text-ParseWords !dist/ExtUtils-ParseXS !cpan/Getopt-Long !cpan/parent !cpan/ExtUtils-Constant !cpan/version
+
+Extensions_nonxsbasic : ..\make_ext.pl $(CONFIGPM) $(GLOBEXE)
+	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) cpan/AutoLoader dist/Carp cpan/ExtUtils-Install cpan/ExtUtils-MakeMaker cpan/ExtUtils-Manifest cpan/File-Path dist/Term-ReadLine dist/Exporter ext/File-Find cpan/Text-Tabs dist/constant cpan/Text-ParseWords dist/ExtUtils-ParseXS cpan/Getopt-Long cpan/parent cpan/ExtUtils-Constant cpan/version
 
 #lib must be built, it can't be buildcustomize.pl-ed, and is required for XS building
 $(DYNALOADER) : ..\make_ext.pl $(CONFIGPM) $(HAVE_COREDIR)
